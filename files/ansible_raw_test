@@ -3,7 +3,7 @@
 # 변수
 # $1: 계정이름
 # $2: 계정 패스워드
-# $3: DB 이름
+# $3: DB이름
 # $4: DB 계정
 # $5: DB 비밀번호
 # $6: DB root 이름
@@ -19,21 +19,20 @@ touch /tmp/vhosts.conf_tempfile
 touch /tmp/cband.conf_tempfile
 touch /tmp/db.conf_tempfile
 
-# 사용자생성및 패스워드 설정
+#사용자생성및 패스워드 설정
 /usr/sbin/useradd -m -s /bin/bash -d /home/$1 -g www $1
 echo "$2" | passwd --stdin $1  # 패스워드 설정
 
 #용량설정
-#edquota -u $1
+# edquota -p test7 -u $1
 
 #홈페이지디렉토리생성및 설정
 chmod 701 /home/$1
 mkdir -p /home/$1/www
 chmod 755 /home/$1/www
 chown $1:www /home/$1/www
-mkdir /usr/local/apache/logs/vhosts/$1
-chmod 755  /usr/local/apache/logs/vhosts/$1
-
+mkdir /etc/httpd/logs/vhosts/$1
+chmod 755  /etc/httpd/logs/vhosts/$1
 
 #가상호스트설정
 
@@ -49,6 +48,9 @@ echo "    Options -ExecCGI   "   >> /tmp/vhosts.conf_tempfile
 echo "    AllowOverride All   "   >> /tmp/vhosts.conf_tempfile
 echo "    Order Deny,Allow   "   >> /tmp/vhosts.conf_tempfile
 echo "    Allow from all   "   >> /tmp/vhosts.conf_tempfile
+echo "    Require all granted   "   >> /tmp/vhosts.conf_tempfile
+echo "    RMode config   " >> /tmp/vhosts.conf_tempfile
+echo "    RUidGid $1 www   " >> /tmp/vhosts.conf_tempfile
 echo "</Directory>   "   >> /tmp/vhosts.conf_tempfile
 echo "    ErrorLog logs/vhosts/$1/$1-error_log"  >> /tmp/vhosts.conf_tempfile
 echo "    CustomLog logs/vhosts/$1/$1-access_log combined" >> /tmp/vhosts.conf_tempfile
@@ -73,14 +75,11 @@ echo "      SecRuleEngine On  "   >> /tmp/vhosts.conf_tempfile
 echo "      </IfModule>"   >> /tmp/vhosts.conf_tempfile
 echo "</VirtualHost>"   >> /tmp/vhosts.conf_tempfile
 
-# cp -arp /usr/local/apache/conf/vhosts.conf /usr/local/apache/conf/vhosts.conf.old
-# cat /tmp/vhosts.conf_tempfile >> /usr/local/apache/conf/vhosts.conf
+# cp -arp /etc/httpd/conf.d/vhosts.conf /etc/httpd/conf.d/vhosts.conf.old
+# cat /tmp/vhosts.conf_tempfile >> /etc/httpd/conf.d/vhosts.conf
 
 echo ""  >> /tmp/cband.conf_tempfile
 echo "<IfModule cband_module>"   >> /tmp/cband.conf_tempfile
-echo "     CBandRandomPulse Off"   >> /tmp/cband.conf_tempfile
-echo "     CBandDefaultExceededCode 509"   >> /tmp/cband.conf_tempfile
-echo "     ErrorDocument 509 /error/509.html"   >> /tmp/cband.conf_tempfile
 echo "<CBandUser cband$1>"   >> /tmp/cband.conf_tempfile
 echo "     CBandUserLimit 3Gi"   >> /tmp/cband.conf_tempfile
 echo "     CBandUserPeriod 1D"   >> /tmp/cband.conf_tempfile
@@ -94,8 +93,8 @@ echo "     </Location>"   >> /tmp/cband.conf_tempfile
 echo "   </CBandUser>"   >> /tmp/cband.conf_tempfile
 echo "</IfModule>"   >> /tmp/cband.conf_tempfile
 
-# cp -arp /usr/local/apache/conf/cband.conf /usr/local/apache/conf/cband.conf.old
-# cat /tmp/cband.conf_tempfile >> /usr/local/apache/conf/cband.conf
+# cp -arp /etc/httpd/conf.d/cband.conf /etc/httpd/conf.d/cband.conf.old
+# cat /tmp/cband.conf_tempfile >> /etc/httpd/conf.d/cband.conf
 
 echo "CREATE DATABASE IF NOT EXISTS $3;" >> /tmp/db.conf_tempfile 
 echo "DROP USER IF EXISTS '$4'@'%';" >> /tmp/db.conf_tempfile 
@@ -106,6 +105,6 @@ echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.c
 echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.conf_tempfile 
 echo "FLUSH PRIVILEGES;" >> /tmp/db.conf_tempfile 
 
-# mysql -u $6 -p$7 < /tmp/db.conf_tempfile
+# mysql -u root -p$5 < /tmp/db.conf_tempfile
 
-# /usr/local/apache/bin/apachectl -t
+# /usr/sbin/apachectl -t

@@ -2,10 +2,10 @@
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Include setup-raw-based tasks
   ansible.builtin.include_tasks: "setup-raw-task.yml"
-  # when: setup | default(true) | bool
+  when: setup | default(true) | bool
 
-# - name: Include remove-raw-based tasks
-#   ansible.builtin.include_tasks: "remove-raw-task.yml"
-#   when: setup is defined and not setup | bool
+- name: Include remove-raw-based tasks
+  ansible.builtin.include_tasks: "remove-raw-task.yml"
+  when: setup is defined and not setup | bool
 
 

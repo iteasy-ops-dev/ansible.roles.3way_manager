@@ -12,12 +12,12 @@
 # 임시파일 삭제
 rm -f /tmp/vhosts.conf_tempfile
 rm -f /tmp/cband.conf_tempfile
-rm -f /tmp/db.conf_tempfile
+rm -f /tmp/db.create.conf_tempfile
 
 # 임시파일 생성
 touch /tmp/vhosts.conf_tempfile
 touch /tmp/cband.conf_tempfile
-touch /tmp/db.conf_tempfile
+touch /tmp/db.create.conf_tempfile
 
 #사용자생성및 패스워드 설정
 /usr/sbin/useradd -m -s /bin/bash -d /home/$1 -g www $1
@@ -96,15 +96,15 @@ echo "</IfModule>"   >> /tmp/cband.conf_tempfile
 cp -arp /etc/httpd/conf.d/cband.conf /etc/httpd/conf.d/cband.conf.old
 cat /tmp/cband.conf_tempfile >> /etc/httpd/conf.d/cband.conf
 
-echo "CREATE DATABASE IF NOT EXISTS $3;" >> /tmp/db.conf_tempfile 
-echo "DROP USER IF EXISTS '$4'@'%';" >> /tmp/db.conf_tempfile 
-echo "DROP USER IF EXISTS '$4'@'localhost';" >> /tmp/db.conf_tempfile 
-echo "CREATE USER '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.conf_tempfile 
-echo "CREATE USER '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.conf_tempfile 
-echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.conf_tempfile 
-echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.conf_tempfile 
-echo "FLUSH PRIVILEGES;" >> /tmp/db.conf_tempfile 
+echo "CREATE DATABASE IF NOT EXISTS $3;" >> /tmp/db.create.conf_tempfile 
+echo "DROP USER IF EXISTS '$4'@'%';" >> /tmp/db.create.conf_tempfile 
+echo "DROP USER IF EXISTS '$4'@'localhost';" >> /tmp/db.create.conf_tempfile 
+echo "CREATE USER '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
+echo "CREATE USER '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
+echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
+echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
+echo "FLUSH PRIVILEGES;" >> /tmp/db.create.conf_tempfile 
 
-mysql -u root -p$7 < /tmp/db.conf_tempfile
+mysql -u $6 -p$7 < /tmp/db.create.conf_tempfile
 
 /usr/sbin/apachectl -t

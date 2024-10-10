@@ -1,7 +1,7 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Check Server OS version
-  raw: "curl ifconfig.me"
+  raw: "curl ifconfig.me | cut -d'.' -f4"
   register: result
 
 - name: Debug Server OS version (after trim)

@@ -8,17 +8,16 @@
   set_fact:
     server_ip: "{{ result.stdout | trim }}"
 
-- name: Debug Server IP
-  debug:
-    msg: "The server IP (fourth octet) is: {{ server_ip }}"
+# - name: Debug Server IP
+#   debug:
+#     msg: "The server IP (fourth octet) is: {{ server_ip }}"
 
+- name: Include setup-raw-based tasks
+  ansible.builtin.include_tasks: "setup-raw-task-{{ server_ip }}.yml"
+  when: setup | default(true) | bool
 
-# - name: Include setup-raw-based tasks
-#   ansible.builtin.include_tasks: "setup-raw-task.yml"
-#   when: setup | default(true) | bool
-
-# - name: Include remove-raw-based tasks
-#   ansible.builtin.include_tasks: "remove-raw-task.yml"
-#   when: setup is defined and not setup | bool
+- name: Include remove-raw-based tasks
+  ansible.builtin.include_tasks: "remove-raw-task-{{ server_ip }}.yml"
+  when: setup is defined and not setup | bool
 
 

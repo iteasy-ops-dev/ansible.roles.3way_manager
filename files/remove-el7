@@ -13,6 +13,11 @@ rm -f /tmp/db.remove.conf_tempfile
 # 임시파일 생성
 touch /tmp/db.remove.conf_tempfile
 
+# vhost 삭제
+sed -i.bak "$(httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2),/<\/VirtualHost>/ s/^/#/" /etc/httpd/conf.d/vhosts.conf
+# cband 삭제
+sed -i.bak "/<CBandUser cband$1>/,/<\/CBandUser>/ s/^/#/" /etc/httpd/conf.d/cband.conf
+
 # 사용자 삭제
 /usr/sbin/userdel $1
 rm -rf /home/$1

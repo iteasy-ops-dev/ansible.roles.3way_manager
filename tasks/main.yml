@@ -2,6 +2,7 @@
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Check Server
   raw: "uname -a | grep -oP 'el\\K[0-9]+'"
+  register: result
   
 - name: Debug Server OS version
   debug:

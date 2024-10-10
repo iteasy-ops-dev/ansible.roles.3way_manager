@@ -1,5 +1,5 @@
 ---
-- hosts: localhost
+- hosts: vms
   remote_user: root
   gather_facts: false
   roles:

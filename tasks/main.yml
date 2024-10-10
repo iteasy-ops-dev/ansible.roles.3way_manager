@@ -4,9 +4,13 @@
   raw: "curl -s ifconfig.me | cut -d'.' -f4"
   register: result
 
-- name: Debug Server OS version (after trim)
+- name: Assign trimmed output to variable
+  set_fact:
+    server_ip: "{{ result.stdout | trim }}"
+
+- name: Debug Server IP
   debug:
-    msg: "{{ result.stdout | trim }}"
+    msg: "The server IP (fourth octet) is: {{ server_ip }}"
 
 
 # - name: Include setup-raw-based tasks

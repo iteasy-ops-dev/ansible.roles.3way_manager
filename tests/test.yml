@@ -3,4 +3,4 @@
   remote_user: root
   gather_facts: false
   roles:
-    - iteasy.ansible.roles.3way_manager
+    - ansible.roles.3way_manager

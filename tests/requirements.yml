@@ -1,0 +1,3 @@
+- src: https://github.com/iteasy-ops-dev/ansible.roles.3way_manager.git
+  scm: git
+  version: main

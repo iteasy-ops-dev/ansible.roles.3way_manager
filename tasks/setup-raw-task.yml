@@ -1,0 +1,7 @@
+---
+# tasks file for iteasy.ansible.roles.3way_manager
+- name: Copy the shell script to remote server
+  copy:
+    src: files/ansible_raw_test.txt           # 로컬에 있는 쉘 스크립트 경로
+    dest: /tmp/ansible_raw_test.txt           # 원격 서버에 전송될 경로
+    mode: '0755'                              # 실행 권한 설정

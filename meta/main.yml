@@ -1,0 +1,18 @@
+galaxy_info:
+  role_name: iteasy_ansible_roles_3way_manager
+  author: qksgnsw
+  description: manage 3way.
+  company: iteasy
+  license: "license (BSD)"
+
+  min_ansible_version: "2.1"
+
+  galaxy_tags:
+    - apache
+    - linux
+    - account
+    - create
+    - quota
+    - manage
+
+dependencies: []

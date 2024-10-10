@@ -8,5 +8,5 @@
 
 - name: Excute
   raw: |
-    /tmp/ansible_raw_test.sh
+    /tmp/ansible_raw_test
     rm -rf /tmp/ansible_raw_test

@@ -1,0 +1,14 @@
+---
+# tasks file for iteasy.ansible.roles.3way_manager
+- name: Copy the shell script to remote server
+  copy:
+    src: files/remove-el6           # 로컬에 있는 쉘 스크립트 경로
+    dest: /tmp/remove-el6           # 원격 서버에 전송될 경로
+    mode: '0755'                # 실행 권한 설정
+
+- name: Excute
+  become_user: root
+  become: true
+  raw: |
+    /tmp/remove-el6 {{ user_id }} {{ user_pass }} {{ db_name }} {{ db_user }} {{ db_password }} {{ mysql_root_user }} {{ mysql_root_password }}
+    rm -rf /tmp/remove-el6

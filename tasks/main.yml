@@ -1,35 +1,47 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Check Server OS version
-  raw: "uname -a | grep -oP 'el\\K[0-9]+'"
+  raw: "curl ifconfig.me"
   register: result
 
 - name: Debug Server OS version (after trim)
   debug:
-    msg: "OS version is el{{ result.stdout | trim }}"
+    msg: "{{ result.stdout | trim }}"
 
-- name: Do something if OS version is el7
-  debug:
-    msg: "This is EL7"
-  when: (result.stdout | trim) == "7"
+# - name: Check Server OS version
+#   raw: "uname -a | grep -oP 'el\\K[0-9]+'"
+#   register: result
 
-- name: Do something else if OS version is el8
-  debug:
-    msg: "This is EL8"
-  when: (result.stdout | trim) == "8"
+# - name: Debug Server OS version (after trim)
+#   debug:
+#     msg: "OS version is el{{ result.stdout | trim }}"
 
-- name: Fallback for other versions
-  debug:
-    msg: "This is not EL7 or EL8"
-  when: (result.stdout | trim) not in ["7", "8"]
+# - name: Do something if OS version is el6
+#   debug:
+#     msg: "This is EL7"
+#   when: (result.stdout | trim) == "6"
 
+# - name: Do something if OS version is el7
+#   debug:
+#     msg: "This is EL7"
+#   when: (result.stdout | trim) == "7"
 
-# - name: Include setup-raw-based tasks
-#   ansible.builtin.include_tasks: "setup-raw-task.yml"
-#   when: setup | default(true) | bool
+# - name: Do something else if OS version is el8
+#   debug:
+#     msg: "This is EL8"
+#   when: (result.stdout | trim) == "8"
 
-# - name: Include remove-raw-based tasks
-#   ansible.builtin.include_tasks: "remove-raw-task.yml"
-#   when: setup is defined and not setup | bool
+# - name: Fallback for other versions
+#   debug:
+#     msg: "This is not EL7 or EL8"
+#   when: (result.stdout | trim) not in ["6", "7", "8"]
+
+- name: Include setup-raw-based tasks
+  ansible.builtin.include_tasks: "setup-raw-task.yml"
+  when: setup | default(true) | bool
+
+- name: Include remove-raw-based tasks
+  ansible.builtin.include_tasks: "remove-raw-task.yml"
+  when: setup is defined and not setup | bool
 
 

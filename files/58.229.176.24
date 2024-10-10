@@ -3,11 +3,9 @@
 # 변수
 # $1: 계정이름
 # $2: 계정 패스워드
-# $3: DB 이름
+# $3: DB이름
 # $4: DB 계정
 # $5: DB 비밀번호
-# $6: DB root 이름
-# $7: DB root 비밀번호
 
 # 임시파일 삭제
 rm -f /tmp/vhosts.conf_tempfile
@@ -106,6 +104,6 @@ echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.c
 echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.conf_tempfile 
 echo "FLUSH PRIVILEGES;" >> /tmp/db.conf_tempfile 
 
-# mysql -u $6 -p$7 < /tmp/db.conf_tempfile
+# mysql -u root -p$5 < /tmp/db.conf_tempfile
 
 # /usr/local/apache/bin/apachectl -t

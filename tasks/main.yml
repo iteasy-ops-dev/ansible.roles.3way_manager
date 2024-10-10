@@ -1,5 +1,13 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
+- name: Check Server
+  raw: uname -a  | awk '{ print $3 }' | cut -d'.' -f6
+  register: result
+  
+- name: Debug Server OS.
+  debug: 
+    msg: "{{ result }}"
+
 - name: Include setup-raw-based tasks
   ansible.builtin.include_tasks: "setup-raw-task.yml"
   when: setup | default(true) | bool

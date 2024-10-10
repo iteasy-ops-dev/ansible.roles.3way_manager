@@ -2,13 +2,25 @@
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Check Server
   raw: "uname -a | grep -oP 'el\\K[0-9]+'"
-  # raw: "uname -a"
-  # raw: "uname -a | awk '{ print $3 }' | cut -d'.' -f6"
-  register: result
   
-- name: Debug Server OS.
-  debug: 
-    msg: "{{ result.stdout }}"
+- name: Debug Server OS version
+  debug:
+    msg: "OS version is el{{ result.stdout }}"
+
+- name: Do something if OS version is el7
+  debug:
+    msg: "This is EL7"
+  when: result.stdout == "7"
+
+- name: Do something else if OS version is el8
+  debug:
+    msg: "This is EL8"
+  when: result.stdout == "8"
+
+- name: Fallback for other versions
+  debug:
+    msg: "This is not EL7 or EL8"
+  when: result.stdout not in ["7", "8"]
 
 # - name: Include setup-raw-based tasks
 #   ansible.builtin.include_tasks: "setup-raw-task.yml"

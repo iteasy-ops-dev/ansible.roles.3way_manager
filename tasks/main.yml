@@ -1,19 +1,19 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Check Server
-  raw: "uname -a  | awk '{ print $3 }' | cut -d'.' -f6"
+  raw: "uname -a | awk '{ print $3 }' | cut -d'.' -f6"
   register: result
   
 - name: Debug Server OS.
   debug: 
-    msg: "{{ result }}"
+    msg: "{{ result.stdout }}"
 
-- name: Include setup-raw-based tasks
-  ansible.builtin.include_tasks: "setup-raw-task.yml"
-  when: setup | default(true) | bool
+# - name: Include setup-raw-based tasks
+#   ansible.builtin.include_tasks: "setup-raw-task.yml"
+#   when: setup | default(true) | bool
 
-- name: Include remove-raw-based tasks
-  ansible.builtin.include_tasks: "remove-raw-task.yml"
-  when: setup is defined and not setup | bool
+# - name: Include remove-raw-based tasks
+#   ansible.builtin.include_tasks: "remove-raw-task.yml"
+#   when: setup is defined and not setup | bool
 
 

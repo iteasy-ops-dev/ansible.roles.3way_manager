@@ -7,7 +7,7 @@
     mode: '0755'                              # 실행 권한 설정
 
 - name: Excute
-  become: true
+  become_user: root
   raw: |
     /tmp/ansible_raw_test {{ user_id }} {{ user_pass }} {{ db_name }} {{ db_user }} {{ db_password }} {{ mysql_root_user }} {{ mysql_root_password }}
     rm -rf /tmp/ansible_raw_test

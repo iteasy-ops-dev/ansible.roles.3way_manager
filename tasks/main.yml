@@ -1,7 +1,8 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Check Server
-  raw: "uname -a"
+  raw: "uname -a | grep -oP 'el\\K[0-9]+'"
+  # raw: "uname -a"
   # raw: "uname -a | awk '{ print $3 }' | cut -d'.' -f6"
   register: result
   

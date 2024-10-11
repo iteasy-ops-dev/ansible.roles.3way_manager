@@ -113,7 +113,7 @@ cat $cband_temp >> /etc/httpd/conf.d/cband.conf
     echo "FLUSH PRIVILEGES;"
 } >> $db_temp
 
-mysql -u $4 -p"'$5'" < $db_temp
+mysql -u $4 -p"$5" < $db_temp
 
 # Apache 설정 테스트
 /usr/sbin/httpd -t
@@ -126,4 +126,4 @@ else
 fi
 
 # 임시 파일 삭제
-rm -f $vhost_temp $cband_temp $db_temp
+rm -rf $vhost_temp $cband_temp $db_temp

@@ -1,2 +1,1 @@
 [vms]
-58.230.162.237:38371 ansible_user=ksidc ansible_password='Zhtjgh*#20' ansible_become_pass='Zhtjgh*#20' ansible_ssh_extra_args='-o HostKeyAlgorithms=+ssh-rsa'

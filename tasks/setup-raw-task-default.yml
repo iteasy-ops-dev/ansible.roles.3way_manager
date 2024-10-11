@@ -1,12 +1,20 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
-- name: Generate a random string for filename
-  set_fact:
-    random_suffix: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
+# - name: Generate a random string for filename
+#   set_fact:
+#     random_suffix: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
 
-- name: Create unique filename using random string
+# - name: Create unique filename using random string
+#   set_fact:
+#     unique_filename: "/tmp/create_{{ random_suffix }}"
+
+- name: Generate a unique filename using mktemp
+  raw: mktemp /tmp/create_XXXXXX
+  register: mktemp_output
+
+- name: Set the unique filename
   set_fact:
-    unique_filename: "/tmp/create_{{ random_suffix }}"
+    unique_filename: "{{ mktemp_output.stdout }}"
 
 - name: Download Shell script
   become_user: root

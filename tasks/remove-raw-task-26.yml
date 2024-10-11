@@ -6,6 +6,10 @@
     dest: /tmp/remove           # 원격 서버에 전송될 경로
     mode: '0755'                # 실행 권한 설정
 
+- name: Debug Password
+  debug:
+    msg: "{{ mysql_root_password }}"
+
 - name: Excute
   become_user: root
   become: true

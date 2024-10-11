@@ -31,6 +31,7 @@ chown $1:www /home/$1/www
 mkdir /etc/httpd/logs/vhosts/$1
 chmod 755 /etc/httpd/logs/vhosts/$1
 
+# 인덱스 파일 추가
 echo "$1.web2002.kr" >> /home/$1/www/index.html
 chown $1:www /home/$1/www/index.html
 
@@ -74,6 +75,7 @@ chown $1:www /home/$1/www/index.html
     echo "          SecRuleEngine On  "  
     echo "      </IfModule>"  
     echo "</VirtualHost>" 
+    echo "# == $1 # $current_date =="
 } >> $vhost_temp
 
 cp -arp /etc/httpd/conf.d/vhosts.conf /etc/httpd/conf.d/vhosts.conf.old
@@ -96,6 +98,7 @@ cat $vhost_temp >> /etc/httpd/conf.d/vhosts.conf
     echo "     </Location>"
     echo "  </CBandUser>"
     echo "</IfModule>"
+    echo "# == cband$1 # $current_date =="
 } >> $cband_temp
 
 cp -arp /etc/httpd/conf.d/cband.conf /etc/httpd/conf.d/cband.conf.old
@@ -127,3 +130,11 @@ fi
 
 # 임시 파일 삭제
 rm -rf $vhost_temp $cband_temp $db_temp
+
+
+#!/bin/bash
+
+echo "$@"
+echo "$1"
+echo "$2"
+echo "$3"

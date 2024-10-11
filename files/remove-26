@@ -42,7 +42,7 @@ echo "$1 계정 및 관련 디렉토리를 삭제했습니다."
 
 echo $4
 echo $5
-echo $6
+echo $@
 
 mysql -u"$4" -p"$5" < "$db_temp"
 if [ $? -eq 0 ]; then

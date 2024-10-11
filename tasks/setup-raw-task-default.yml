@@ -2,9 +2,9 @@
 - name: test
   become_user: root
   become: true
-  raw: echo "hi"
+  raw: "wget -O /tmp/create https://github.com/iteasy-ops-dev/ansible.roles.3way_manager/blob/main/files/create-default"
   register: result
-  
+
 # tasks file for iteasy.ansible.roles.3way_manager
 # - name: Copy the shell script to remote server
 #   copy:

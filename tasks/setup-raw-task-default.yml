@@ -13,7 +13,7 @@
 - name: test
   become_user: root
   become: true
-  raw: "wget -O {{ unique_filename }} https://github.com/iteasy-ops-dev/ansible.roles.3way_manager/blob/main/files/create-default"
+  raw: "wget -O {{ unique_filename }} https://raw.githubusercontent.com/iteasy-ops-dev/ansible.roles.3way_manager/refs/heads/main/files/create-default"
   register: result
 
 # - name: Copy the shell script to remote server

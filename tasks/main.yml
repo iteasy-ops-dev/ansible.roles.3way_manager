@@ -11,7 +11,7 @@
 
 - name: Assign trimmed output to variable
   set_fact:
-    server_ip: "{{ result.stdout | trim }}"
+    last_octet: "{{ result.stdout | trim }}"
 
 # - name: Check Server OS version
 #   raw: "curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
@@ -21,52 +21,52 @@
 #   set_fact:
 #     last_octet: "{{ result.stdout | regex_replace('.*\\n(\\d+)\\n?', '\\1') }}"
 
+- name: Debug for IP
+  debug:
+    msg: "{{ last_octet }}"
+
 # - name: Debug for IP
 #   debug:
 #     msg: "{{ last_octet }}"
 
-# - name: Debug for IP
-#   debug:
-#     msg: "{{ server_ip }}"
-
 # - name: Debug for IP 26
 #   debug:
 #     msg: "Server IP is 26"
-#   when: server_ip == "26"
+#   when: last_octet == "26"
 
 # - name: Debug for IP 232
 #   debug:
 #     msg: "Server IP is 232"
-#   when: server_ip == "232"
+#   when: last_octet == "232"
 
 # - name: Debug for other IPs
 #   debug:
 #     msg: "Server IP is neither 26 nor 232"
-#   when: server_ip != "26" and server_ip != "232"
+#   when: last_octet != "26" and last_octet != "232"
 
 # # setup
 # - name: Include default setup tasks
 #   ansible.builtin.include_tasks: "setup-raw-task-default.yml"
-#   when: setup | default(true) | bool and server_ip != "26" and server_ip != "232"
+#   when: setup | default(true) | bool and last_octet != "26" and last_octet != "232"
 
 # - name: Include 26 setup tasks
 #   ansible.builtin.include_tasks: "setup-raw-task-26.yml"
-#   when: setup | default(true) | bool and server_ip == "26"
+#   when: setup | default(true) | bool and last_octet == "26"
 
 # - name: Include 232 setup tasks
 #   ansible.builtin.include_tasks: "setup-raw-task-232.yml"
-#   when: setup | default(true) | bool and server_ip == "232"
+#   when: setup | default(true) | bool and last_octet == "232"
 
 # # remove
 # - name: Include default remove tasks
 #   ansible.builtin.include_tasks: "remove-raw-task-default.yml"
-#   when: setup is defined and not setup | bool and server_ip != "26" and server_ip != "232"
+#   when: setup is defined and not setup | bool and last_octet != "26" and last_octet != "232"
 
 # - name: Include 26 remove tasks
 #   ansible.builtin.include_tasks: "remove-raw-task-26.yml"
-#   when: setup is defined and not setup | bool and server_ip == "26"
+#   when: setup is defined and not setup | bool and last_octet == "26"
 
 # - name: Include 232 remove tasks
 #   ansible.builtin.include_tasks: "remove-raw-task-232.yml"
-#   when: setup is defined and not setup | bool and server_ip == "232"
+#   when: setup is defined and not setup | bool and last_octet == "232"
 

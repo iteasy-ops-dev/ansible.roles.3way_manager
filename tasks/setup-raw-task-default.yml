@@ -1,24 +1,28 @@
 ---
-- name: test
-  become_user: root
-  become: true
-  raw: "wget -O /tmp/create https://github.com/iteasy-ops-dev/ansible.roles.3way_manager/blob/main/files/create-default"
-  register: result
-
 # tasks file for iteasy.ansible.roles.3way_manager
-# - name: Copy the shell script to remote server
-#   copy:
-#     src: files/create-default          # 로컬에 있는 쉘 스크립트 경로
-#     dest: /tmp/create                  # 원격 서버에 전송될 경로
-#     mode: '0755'                       # 실행 권한 설정
+
+# - name: test
+#   become_user: root
+#   become: true
+#   raw: "wget -O /tmp/create https://github.com/iteasy-ops-dev/ansible.roles.3way_manager/blob/main/files/create-default"
+#   register: result
+- name: Generate unique file name
+  set_fact:
+    unique_filename: "/tmp/create_{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}"
+
+- name: Copy the shell script to remote server
+  copy:
+    src: files/create-default          # 로컬에 있는 쉘 스크립트 경로
+    dest: "{{ unique_filename }}"                  # 원격 서버에 전송될 경로
+    mode: '0755'                       # 실행 권한 설정
 
 # - name: Excute
 #   become_user: root
 #   become: true
 #   register: result
 #   raw: |
-#     /tmp/create {{ user_id }} {{ user_pass }} {{ db_name }} {{ db_user }} '{{ db_password }}' {{ mysql_root_user }} '{{ mysql_root_password }}'
-#     rm -rf /tmp/create
+#     {{ unique_filename }} {{ user_id }} {{ user_pass }} {{ db_name }} {{ db_user }} '{{ db_password }}' {{ mysql_root_user }} '{{ mysql_root_password }}'
+#     rm -rf {{ unique_filename }}
 
 - name: Debug
   debug:

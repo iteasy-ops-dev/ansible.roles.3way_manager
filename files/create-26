@@ -185,8 +185,8 @@ echo "$1.web2002.kr" >> /home/$1/www/index.html
     echo "</VirtualHost>" 
 } >> $vhost_temp
 
-# cp -arp /etc/httpd/conf.d/vhosts.conf /etc/httpd/conf.d/vhosts.conf.old
-# cat $vhost_temp >> /etc/httpd/conf.d/vhosts.conf
+cp -arp /etc/httpd/conf.d/vhosts.conf /etc/httpd/conf.d/vhosts.conf.old
+cat $vhost_temp >> /etc/httpd/conf.d/vhosts.conf
 
 # CBand 설정
 {
@@ -206,8 +206,8 @@ echo "$1.web2002.kr" >> /home/$1/www/index.html
     echo "</IfModule>"
 } >> $cband_temp
 
-# cp -arp /etc/httpd/conf.d/cband.conf /etc/httpd/conf.d/cband.conf.old
-# cat $cband_temp >> /etc/httpd/conf.d/cband.conf
+cp -arp /etc/httpd/conf.d/cband.conf /etc/httpd/conf.d/cband.conf.old
+cat $cband_temp >> /etc/httpd/conf.d/cband.conf
 
 # MySQL DB 및 사용자 생성
 {
@@ -221,7 +221,7 @@ echo "$1.web2002.kr" >> /home/$1/www/index.html
     echo "FLUSH PRIVILEGES;"
 } >> $db_temp
 
-# mysql -u $6 -p$7 < $db_temp
+mysql -u $6 -p$7 < $db_temp
 
 # Apache 설정 테스트
 /usr/sbin/httpd -t
@@ -234,4 +234,4 @@ else
 fi
 
 # 임시 파일 삭제
-# rm -f $vhost_temp $cband_temp $db_temp
+rm -f $vhost_temp $cband_temp $db_temp

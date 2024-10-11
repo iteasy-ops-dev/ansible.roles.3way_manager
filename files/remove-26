@@ -40,11 +40,8 @@
 # $4: DB root 이름
 # $5: DB root 비밀번호
 
-# 임시파일 삭제
-rm -f /tmp/db.remove.conf_tempfile
-
 # 임시파일 생성
-touch /tmp/db.remove.conf_tempfile
+db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 
 # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
 vhost_line=$(/usr/sbin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
@@ -76,22 +73,22 @@ echo "$1 계정 및 관련 디렉토리를 삭제했습니다."
     echo "DROP USER IF EXISTS '$3'@'localhost';"
 } >> /tmp/db.remove.conf_tempfile
 
-# mysql -u $4 -p$5 < /tmp/db.remove.conf_tempfile
-# if [ $? -eq 0 ]; then
-#     echo "$2 데이터베이스 및 $3 DB 사용자 삭제에 성공했습니다."
-# else
-#     echo "데이터베이스 삭제에 실패했습니다."
-# fi
+mysql -u $4 -p$5 < /tmp/db.remove.conf_tempfile
+if [ $? -eq 0 ]; then
+    echo "$2 데이터베이스 및 $3 DB 사용자 삭제에 성공했습니다."
+else
+    echo "데이터베이스 삭제에 실패했습니다."
+fi
 
 # Apache 설정 문법 검사
 /usr/sbin/httpd -t
-# if [ $? -eq 0 ]; then
-#     echo "Apache 설정 파일에 문제가 없습니다."
-#     /usr/sbin/httpd -k graceful  # Apache 재시작
-# else
-#     echo "Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
-#     exit 1
-# fi
+if [ $? -eq 0 ]; then
+    echo "Apache 설정 파일에 문제가 없습니다."
+    # /usr/sbin/httpd -k graceful  # Apache 재시작
+else
+    echo "Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
+    exit 1
+fi
 
 # 임시 파일 삭제
-# rm -f /tmp/db.remove.conf_tempfile
+rm -f $db_temp

@@ -4,12 +4,15 @@
   raw: "curl -s ifconfig.me | cut -d'.' -f4"
   register: result
 
+- name: Debug for IP
+  debug:
+    msg: "{{ result.stdout }}"
+
 - name: Assign trimmed output to variable
   set_fact:
     server_ip: "{{ result.stdout | trim }}"
 
-
-- name: Debug for IP 26
+- name: Debug for IP
   debug:
     msg: "{{ server_ip }}"
 

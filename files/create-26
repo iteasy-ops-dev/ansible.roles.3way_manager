@@ -43,15 +43,15 @@ chown $1:www /home/$1/www/index.html
     echo "    DocumentRoot /home/$1/www"   
     echo "    ServerName $1.web2002.kr"   
     echo "    ServerAlias $1.web2002.kr"    
-    echo "<Directory /home/$1/www>"  
-    echo "    Options -ExecCGI   "  
-    echo "    AllowOverride All   "  
-    echo "    Order Deny,Allow   "  
-    echo "    Allow from all   "  
-    echo "    Require all granted   "  
-    echo "    RMode config   "
-    echo "    RUidGid $1 www   "
-    echo "</Directory>   "  
+    echo "    <Directory /home/$1/www>"  
+    echo "        Options -ExecCGI   "  
+    echo "        AllowOverride All   "  
+    echo "        Order Deny,Allow   "  
+    echo "        Allow from all   "  
+    echo "        Require all granted   "  
+    echo "        RMode config   "
+    echo "        RUidGid $1 www   "
+    echo "    </Directory>   "  
     echo "    ErrorLog logs/vhosts/$1/$1-error_log" 
     echo "    CustomLog logs/vhosts/$1/$1-access_log combined"
     echo "      php_admin_flag display_errors Off "  
@@ -61,7 +61,7 @@ chown $1:www /home/$1/www/index.html
     echo "      php_admin_flag safe_mode Off "  
     echo "      php_admin_flag session.auto_start Off "  
     echo "      <IfModule cband_module> "  
-    echo "        CBandUser cband$1"  
+    echo "          CBandUser cband$1"  
     echo "      </IfModule> "  
     echo "      RewriteEngine On "  
     echo "      RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) "  
@@ -70,8 +70,8 @@ chown $1:www /home/$1/www/index.html
     echo "      RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]  "  
     echo "      Include conf/nobots.conf  "  
     echo "      <IfModule security2_module>  "  
-    echo "      Include conf/modsec_rules/modsecurity-middle.conf  "  
-    echo "      SecRuleEngine On  "  
+    echo "          Include conf/modsec_rules/modsecurity-middle.conf  "  
+    echo "          SecRuleEngine On  "  
     echo "      </IfModule>"  
     echo "</VirtualHost>" 
 } >> $vhost_temp
@@ -113,7 +113,7 @@ cat $cband_temp >> /etc/httpd/conf.d/cband.conf
     echo "FLUSH PRIVILEGES;"
 } >> $db_temp
 
-mysql -u $4 -p"$5" < $db_temp
+mysql -u $4 -p\'$5\' < $db_temp
 
 # Apache 설정 테스트
 /usr/sbin/httpd -t

@@ -20,15 +20,8 @@
   register: result
   raw: |
     chmod 755 {{ unique_filename }}
+    {{ unique_filename }} {{ user_id }} {{ user_pass }} {{ db_name }} {{ db_user }} '{{ db_password }}' {{ mysql_root_user }} '{{ mysql_root_password }}'
     rm -rf {{ unique_filename }}
-
-# - name: Excute
-#   become_user: root
-#   become: true
-#   register: result
-#   raw: |
-#     {{ unique_filename }} {{ user_id }} {{ user_pass }} {{ db_name }} {{ db_user }} '{{ db_password }}' {{ mysql_root_user }} '{{ mysql_root_password }}'
-#     rm -rf {{ unique_filename }}
 
 - name: Debug
   debug:

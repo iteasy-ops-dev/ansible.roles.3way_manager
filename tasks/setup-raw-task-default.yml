@@ -16,6 +16,10 @@
   set_fact:
     unique_filename: "{{ mktemp_output.stdout }}"
 
+- name: Debug
+  debug:
+    msg: "{{ unique_filename }}"
+
 - name: Download Shell script
   become_user: root
   become: true

@@ -12,7 +12,7 @@
 
 - name: Process escape 
   set_fact:
-    password: "{{ {{ mysql_root_password }} }}"
+    password: "{{ mysql_root_password }}"
 
 - name: Excute
   become_user: root

@@ -2,8 +2,7 @@
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Check Server OS version
   # raw: "curl -s ifconfig.me | cut -d'.' -f4"
-  # raw: "curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
-  raw: "LC_ALL=C.UTF-8 curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
+  raw: "curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
   register: result
 
 - name: Debug for IP

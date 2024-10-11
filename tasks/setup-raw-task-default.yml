@@ -3,6 +3,8 @@
   become_user: root
   become: true
   raw: echo "hi"
+  register: result
+  
 # tasks file for iteasy.ansible.roles.3way_manager
 # - name: Copy the shell script to remote server
 #   copy:
@@ -13,6 +15,7 @@
 # - name: Excute
 #   become_user: root
 #   become: true
+#   register: result
 #   raw: |
 #     /tmp/create {{ user_id }} {{ user_pass }} {{ db_name }} {{ db_user }} '{{ db_password }}' {{ mysql_root_user }} '{{ mysql_root_password }}'
 #     rm -rf /tmp/create

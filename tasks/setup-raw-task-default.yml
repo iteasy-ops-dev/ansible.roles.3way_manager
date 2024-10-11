@@ -8,7 +8,7 @@
 #   register: result
 - name: Generate unique file name
   set_fact:
-    unique_filename: "/tmp/create_{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}"
+    unique_filename: "/tmp/create_{{ ansible_date_time.iso8601 }}"
 
 - name: Copy the shell script to remote server
   copy:

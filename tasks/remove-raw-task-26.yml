@@ -10,16 +10,12 @@
   debug:
     msg: "{{ mysql_root_password }}"
 
-- name: Process escape 
-  set_fact:
-    password: "{{ mysql_root_password }}"
-
 - name: Excute
   become_user: root
   become: true
   register: result
   raw: |
-    /tmp/remove {{ user_id }} {{ db_name }} {{ db_user }} {{ mysql_root_user }} "{{ password }}"
+    /tmp/remove {{ user_id }} {{ db_name }} {{ db_user }} {{ mysql_root_user }} '{{ mysql_root_password }}'
     rm -rf /tmp/remove
 
 - name: Debug

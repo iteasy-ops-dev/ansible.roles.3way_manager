@@ -1,36 +1,48 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
+# - name: Check Server OS version
+#   # raw: "curl -s ifconfig.me | cut -d'.' -f4"
+#   raw: "curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
+#   register: result
+
+# - name: Debug for IP
+#   debug:
+#     msg: "{{ result.stdout }}"
+
+# - name: Assign trimmed output to variable
+#   set_fact:
+#     server_ip: "{{ result.stdout | trim }}"
+
 - name: Check Server OS version
-  # raw: "curl -s ifconfig.me | cut -d'.' -f4"
   raw: "curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
   register: result
 
-- name: Debug for IP
-  debug:
-    msg: "{{ result.stdout }}"
-
-- name: Assign trimmed output to variable
+- name: Extract IP from output
   set_fact:
-    server_ip: "{{ result.stdout | trim }}"
+    last_octet: "{{ result.stdout | regex_replace('.*\\n(\\d+)\\n?', '\\1') }}"
 
 - name: Debug for IP
   debug:
-    msg: "{{ server_ip }}"
+    msg: "{{ last_octet }}"
 
-- name: Debug for IP 26
-  debug:
-    msg: "Server IP is 26"
-  when: server_ip == "26"
+# - name: Debug for IP
+#   debug:
+#     msg: "{{ server_ip }}"
 
-- name: Debug for IP 232
-  debug:
-    msg: "Server IP is 232"
-  when: server_ip == "232"
+# - name: Debug for IP 26
+#   debug:
+#     msg: "Server IP is 26"
+#   when: server_ip == "26"
 
-- name: Debug for other IPs
-  debug:
-    msg: "Server IP is neither 26 nor 232"
-  when: server_ip != "26" and server_ip != "232"
+# - name: Debug for IP 232
+#   debug:
+#     msg: "Server IP is 232"
+#   when: server_ip == "232"
+
+# - name: Debug for other IPs
+#   debug:
+#     msg: "Server IP is neither 26 nor 232"
+#   when: server_ip != "26" and server_ip != "232"
 
 # # setup
 # - name: Include default setup tasks

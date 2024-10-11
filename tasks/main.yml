@@ -1,29 +1,29 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
-# - name: Check Server OS version
-#   # raw: "curl -s ifconfig.me | cut -d'.' -f4"
-#   raw: "curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
-#   register: result
-
-# - name: Debug for IP
-#   debug:
-#     msg: "{{ result.stdout }}"
-
-# - name: Assign trimmed output to variable
-#   set_fact:
-#     server_ip: "{{ result.stdout | trim }}"
-
 - name: Check Server OS version
+  # raw: "curl -s ifconfig.me | cut -d'.' -f4"
   raw: "curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
   register: result
 
-- name: Extract IP from output
-  set_fact:
-    last_octet: "{{ result.stdout | regex_replace('.*\\n(\\d+)\\n?', '\\1') }}"
-
 - name: Debug for IP
   debug:
-    msg: "{{ last_octet }}"
+    msg: "{{ result.stdout }}"
+
+- name: Assign trimmed output to variable
+  set_fact:
+    server_ip: "{{ result.stdout | trim }}"
+
+# - name: Check Server OS version
+#   raw: "curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
+#   register: result
+
+# - name: Extract IP from output
+#   set_fact:
+#     last_octet: "{{ result.stdout | regex_replace('.*\\n(\\d+)\\n?', '\\1') }}"
+
+# - name: Debug for IP
+#   debug:
+#     msg: "{{ last_octet }}"
 
 # - name: Debug for IP
 #   debug:

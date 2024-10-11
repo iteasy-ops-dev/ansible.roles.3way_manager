@@ -113,7 +113,7 @@ chown $1:www /home/$1/www/index.html
 
 # cp -arp /usr/local/apache/conf/vhosts.conf /usr/local/apache/conf/vhosts.conf.old
 # cat /tmp/vhosts.conf_tempfile >> /usr/local/apache/conf/vhosts.conf
-# cat $vhost_temp >> /etc/httpd/conf.d/vhosts.conf
+# cat $vhost_temp >> /usr/local/apache/conf/vhosts.conf
 
 # echo ""  >> /tmp/cband.conf_tempfile
 # echo "<IfModule cband_module>"   >> /tmp/cband.conf_tempfile
@@ -158,7 +158,7 @@ chown $1:www /home/$1/www/index.html
 
 # cp -arp /usr/local/apache/conf/cband.conf /usr/local/apache/conf/cband.conf.old
 # cat /tmp/cband.conf_tempfile >> /usr/local/apache/conf/cband.conf
-# cat $cband_temp >> /etc/httpd/conf.d/cband.conf
+# cat $cband_temp >> /usr/local/apache/conf/cband.conf
 
 # echo "CREATE DATABASE IF NOT EXISTS $3;" >> /tmp/db.create.conf_tempfile 
 # echo "DROP USER IF EXISTS '$4'@'%';" >> /tmp/db.create.conf_tempfile 

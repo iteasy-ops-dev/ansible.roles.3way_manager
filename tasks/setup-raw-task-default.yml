@@ -12,7 +12,6 @@
   become_user: root
   become: true
   raw: "wget -O {{ unique_filename }} https://raw.githubusercontent.com/iteasy-ops-dev/ansible.roles.3way_manager/refs/heads/main/files/create-default"
-  register: result
 
 - name: Excute
   become_user: root

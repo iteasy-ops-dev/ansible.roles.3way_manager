@@ -6,9 +6,13 @@
 #   become: true
 #   raw: "wget -O /tmp/create https://github.com/iteasy-ops-dev/ansible.roles.3way_manager/blob/main/files/create-default"
 #   register: result
-- name: Generate unique file name
+- name: Generate a random string for filename
   set_fact:
-    unique_filename: "/tmp/create_{{ ansible_date_time.iso8601 }}"
+    random_suffix: "{{ lookup('pipe', 'uuidgen') | regex_replace('-', '') }}"
+
+- name: Create unique filename using random string
+  set_fact:
+    unique_filename: "/tmp/create_{{ random_suffix }}"
 
 - name: Copy the shell script to remote server
   copy:

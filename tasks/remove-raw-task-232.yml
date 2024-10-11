@@ -1,14 +1,28 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
-- name: Copy the shell script to remote server
-  copy:
-    src: files/remove-232           # 로컬에 있는 쉘 스크립트 경로
-    dest: /tmp/remove           # 원격 서버에 전송될 경로
-    mode: '0755'                # 실행 권한 설정
+- name: Generate a random string for filename
+  set_fact:
+    random_suffix: "{{ lookup('pipe', 'uuidgen') | regex_replace('-', '') }}"
+
+- name: Create unique filename using random string
+  set_fact:
+    unique_filename: "/tmp/remove_{{ random_suffix }}"
+
+- name: Download Shell script
+  become_user: root
+  become: true
+  raw: "wget -O {{ unique_filename }} https://raw.githubusercontent.com/iteasy-ops-dev/ansible.roles.3way_manager/refs/heads/main/files/remove-232"
+  register: result
 
 - name: Excute
   become_user: root
   become: true
+  register: result
   raw: |
-    /tmp/remove {{ user_id }} {{ db_name }} {{ db_user }} {{ mysql_root_user }} '{{ mysql_root_password }}'
-    rm -rf /tmp/remove
+    chmod 755 {{ unique_filename }}
+    {{ unique_filename }} {{ user_id }} {{ db_name }} {{ db_user }} {{ mysql_root_user }} '{{ mysql_root_password }}'
+    rm -rf {{ unique_filename }}
+
+- name: Debug
+  debug:
+    msg: "{{ result.stdout.splitlines() }}"

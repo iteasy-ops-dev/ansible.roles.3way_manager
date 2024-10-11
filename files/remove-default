@@ -7,19 +7,8 @@
 # $4: DB root 이름
 # $5: DB root 비밀번호
 
-# 임시파일 삭제
-# rm -f /tmp/db.remove.conf_tempfile
-
-# # 임시파일 생성
-# touch /tmp/db.remove.conf_tempfile
-
 # 임시파일 생성
 db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
-
-# # vhost 삭제
-# sed -i.bak "$(/usr/sbin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2),/<\/VirtualHost>/ s/^/#/" /usr/local/apache/conf/vhosts.conf
-# # cband 삭제
-# sed -i.bak "/<CBandUser cband$1>/,/<\/CBandUser>/ s/^/#/" /usr/local/apache/conf/cband.conf
 
 # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
 vhost_line=$(/usr/local/apache/bin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
@@ -44,10 +33,6 @@ rm -rf /home/$1
 rm -rf /usr/local/apache/logs/vhosts/$1
 echo "$1 계정 및 관련 디렉토리를 삭제했습니다."
 
-# echo "DROP DATABASE IF EXISTS $2;" >> /tmp/db.remove.conf_tempfile 
-# echo "DROP USER IF EXISTS '$3'@'%';" >> /tmp/db.remove.conf_tempfile 
-# echo "DROP USER IF EXISTS '$3'@'localhost';" >> /tmp/db.remove.conf_tempfile 
-
 # 데이터베이스 및 DB 사용자 삭제
 {
     echo "DROP DATABASE IF EXISTS $2;"
@@ -55,7 +40,6 @@ echo "$1 계정 및 관련 디렉토리를 삭제했습니다."
     echo "DROP USER IF EXISTS '$3'@'localhost';"
 } >> $db_temp
 
-# mysql -u $4 -p$5 < /tmp/db.remove.conf_tempfile
 # mysql -u"$4" -p"$5" < "$db_temp"
 if [ $? -eq 0 ]; then
     echo "$2 데이터베이스 및 $3 DB 사용자 삭제에 성공했습니다."

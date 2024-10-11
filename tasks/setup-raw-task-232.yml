@@ -2,7 +2,7 @@
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Generate a random string for filename
   set_fact:
-    random_suffix: "{{ lookup('pipe', 'uuidgen') | regex_replace('-', '') }}"
+    random_suffix: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
 
 - name: Create unique filename using random string
   set_fact:

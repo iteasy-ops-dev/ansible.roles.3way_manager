@@ -113,7 +113,7 @@ cat $cband_temp >> /etc/httpd/conf.d/cband.conf
     echo "FLUSH PRIVILEGES;"
 } >> $db_temp
 
-mysql -u $6 -p\'$7\' < $db_temp
+mysql -u "$6" -p\'"$7"\' < $db_temp
 
 # Apache 설정 테스트
 /usr/sbin/httpd -t

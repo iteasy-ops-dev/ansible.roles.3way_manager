@@ -9,6 +9,8 @@
 # $6: DB root 이름
 # $7: DB root 비밀번호
 
+current_date=$(date +"%Y-%m-%d")
+
 # 임시파일 생성 (고유한 이름으로)
 vhost_temp=$(mktemp /tmp/vhosts.conf_tempfile.XXXXXX)
 cband_temp=$(mktemp /tmp/cband.conf_tempfile.XXXXXX)
@@ -30,11 +32,12 @@ mkdir /etc/httpd/logs/vhosts/$1
 chmod 755 /etc/httpd/logs/vhosts/$1
 
 echo "$1.web2002.kr" >> /home/$1/www/index.html
+chown $1:www /home/$1/www/index.html
 
 # 가상 호스트 설정
 {
     echo ""
-    echo "# == $1 =="
+    echo "# == $1 # $current_date =="
     echo "<VirtualHost *:80>"
     echo "    ServerAdmin webmaster@"   
     echo "    DocumentRoot /home/$1/www"   
@@ -79,6 +82,7 @@ cat $vhost_temp >> /etc/httpd/conf.d/vhosts.conf
 # CBand 설정
 {
     echo ""
+    echo "# == cband$1 # $current_date =="
     echo "<IfModule cband_module>"
     echo "  <CBandUser cband$1>"
     echo "     CBandUserLimit 3Gi"
@@ -109,7 +113,7 @@ cat $cband_temp >> /etc/httpd/conf.d/cband.conf
     echo "FLUSH PRIVILEGES;"
 } >> $db_temp
 
-mysql -u $6 -p$7 < $db_temp
+mysql -u $4 -p"'$5'" < $db_temp
 
 # Apache 설정 테스트
 /usr/sbin/httpd -t

@@ -21,7 +21,7 @@ db_temp=$(mktemp /tmp/db.create.conf_tempfile.XXXXXX)
 echo "$1:$2" | chpasswd  # chpasswd 명령으로 패스워드 설정
 
 # 용량 설정
-# edquota -p test7 -u $1
+edquota -p test7 -u $1
 
 # 홈페이지 디렉토리 생성 및 설정
 chmod 701 /home/$1

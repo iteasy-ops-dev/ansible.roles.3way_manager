@@ -1,7 +1,5 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
-
-
 - name: Generate a random string for filename
   set_fact:
     random_suffix: "{{ lookup('pipe', 'uuidgen') | regex_replace('-', '') }}"
@@ -10,17 +8,24 @@
   set_fact:
     unique_filename: "/tmp/create_{{ random_suffix }}"
 
-# - name: test
-#   become_user: root
-#   become: true
-#   raw: "wget -O {{ unique_filename }} https://raw.githubusercontent.com/iteasy-ops-dev/ansible.roles.3way_manager/refs/heads/main/files/create-default"
-#   register: result
+- name: Download Shell script
+  become_user: root
+  become: true
+  raw: "wget -O {{ unique_filename }} https://raw.githubusercontent.com/iteasy-ops-dev/ansible.roles.3way_manager/refs/heads/main/files/create-default"
+  register: result
 
-- name: Copy the shell script to remote server
-  copy:
-    src: files/create-default          # 로컬에 있는 쉘 스크립트 경로
-    dest: "{{ unique_filename }}"                  # 원격 서버에 전송될 경로
-    mode: '0755'                       # 실행 권한 설정
+# - name: Copy the shell script to remote server
+#   copy:
+#     src: files/create-default          # 로컬에 있는 쉘 스크립트 경로
+#     dest: "{{ unique_filename }}"                  # 원격 서버에 전송될 경로
+#     mode: '0755'                       # 실행 권한 설정
+
+- name: Excute
+  become_user: root
+  become: true
+  register: result
+  raw: |
+    chmod 755 {{ unique_filename }}
 
 # - name: Excute
 #   become_user: root

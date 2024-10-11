@@ -111,9 +111,9 @@ chown $1:www /home/$1/www/index.html
     echo "# == $1 # $current_date =="
 } >> $vhost_temp
 
-# cp -arp /usr/local/apache/conf/vhosts.conf /usr/local/apache/conf/vhosts.conf.old
+cp -arp /usr/local/apache/conf/vhosts.conf /usr/local/apache/conf/vhosts.conf.old
 # cat /tmp/vhosts.conf_tempfile >> /usr/local/apache/conf/vhosts.conf
-# cat $vhost_temp >> /usr/local/apache/conf/vhosts.conf
+cat $vhost_temp >> /usr/local/apache/conf/vhosts.conf
 
 # echo ""  >> /tmp/cband.conf_tempfile
 # echo "<IfModule cband_module>"   >> /tmp/cband.conf_tempfile
@@ -156,9 +156,9 @@ chown $1:www /home/$1/www/index.html
     echo "# == cband$1 # $current_date =="
 } >> $cband_temp
 
-# cp -arp /usr/local/apache/conf/cband.conf /usr/local/apache/conf/cband.conf.old
+cp -arp /usr/local/apache/conf/cband.conf /usr/local/apache/conf/cband.conf.old
 # cat /tmp/cband.conf_tempfile >> /usr/local/apache/conf/cband.conf
-# cat $cband_temp >> /usr/local/apache/conf/cband.conf
+cat $cband_temp >> /usr/local/apache/conf/cband.conf
 
 # echo "CREATE DATABASE IF NOT EXISTS $3;" >> /tmp/db.create.conf_tempfile 
 # echo "DROP USER IF EXISTS '$4'@'%';" >> /tmp/db.create.conf_tempfile 
@@ -194,4 +194,4 @@ else
 fi
 
 # 임시 파일 삭제
-# rm -rf $vhost_temp $cband_temp $db_temp
+rm -rf $vhost_temp $cband_temp $db_temp

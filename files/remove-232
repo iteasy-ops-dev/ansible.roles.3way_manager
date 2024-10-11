@@ -15,7 +15,7 @@ touch /tmp/db.remove.conf_tempfile
 
 
 # vhost 삭제
-sed -i.bak "$(/usr/sbin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2),/<\/VirtualHost>/ s/^/#/" /usr/local/apache/conf/vhosts.conf
+sed -i.bak "$(/usr/local/apache/bin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2),/<\/VirtualHost>/ s/^/#/" /usr/local/apache/conf/vhosts.conf
 # cband 삭제
 sed -i.bak "/<CBandUser cband$1>/,/<\/CBandUser>/ s/^/#/" /usr/local/apache/conf/cband.conf
 

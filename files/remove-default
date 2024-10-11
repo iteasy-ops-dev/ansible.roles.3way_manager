@@ -22,7 +22,7 @@ db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 # sed -i.bak "/<CBandUser cband$1>/,/<\/CBandUser>/ s/^/#/" /usr/local/apache/conf/cband.conf
 
 # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
-vhost_line=$(/usr/sbin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
+vhost_line=$(/usr/local/apache/bin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
 if [ -n "$vhost_line" ]; then
     sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" /etc/httpd/conf.d/vhosts.conf
     echo "vhost 설정에서 $1 가상 호스트를 주석 처리했습니다."

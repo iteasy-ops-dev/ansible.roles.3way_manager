@@ -141,34 +141,48 @@ chown $1:www /home/$1/www
 mkdir /etc/httpd/logs/vhosts/$1
 chmod 755 /etc/httpd/logs/vhosts/$1
 
+echo "$1.web2002.kr" >> /home/$1/www/index.html
+
 # 가상 호스트 설정
 {
     echo ""
-    echo "<VirtualHost *:80>"
-    echo "    ServerAdmin webmaster@"
-    echo "    DocumentRoot /home/$1/www"
-    echo "    ServerName $1.web2002.kr"
-    echo "    ServerAlias $1.web2002.kr"
-    echo "<Directory /home/$1/www>"
-    echo "    Options -ExecCGI"
-    echo "    AllowOverride All"
-    echo "    Order Deny,Allow"
-    echo "    Allow from all"
-    echo "    Require all granted"
-    echo "    RMode config"
-    echo "    RUidGid $1 www"
-    echo "</Directory>"
-    echo "    ErrorLog logs/vhosts/$1/$1-error_log"
-    echo "    CustomLog logs/vhosts/$1/$1-access_log combined"
-    echo "      php_admin_flag display_errors Off"
-    echo "      php_admin_flag allow_url_fopen Off"
-    echo "      <IfModule cband_module>"
-    echo "        CBandUser cband$1"
-    echo "      </IfModule>"
-    echo "      RewriteEngine On"
-    echo "      RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)"
-    echo "      RewriteRule .* - [F]"
-    echo "</VirtualHost>"
+    echo "# == $1 =="
+    echo "<VirtualHost *:80>" >> /tmp/vhosts.conf_tempfile
+    echo "    ServerAdmin webmaster@"    >> /tmp/vhosts.conf_tempfile
+    echo "    DocumentRoot /home/$1/www"    >> /tmp/vhosts.conf_tempfile
+    echo "    ServerName $1.web2002.kr"    >> /tmp/vhosts.conf_tempfile
+    echo "    ServerAlias $1.web2002.kr"     >> /tmp/vhosts.conf_tempfile
+    echo "<Directory /home/$1/www>"   >> /tmp/vhosts.conf_tempfile
+    echo "    Options -ExecCGI   "   >> /tmp/vhosts.conf_tempfile
+    echo "    AllowOverride All   "   >> /tmp/vhosts.conf_tempfile
+    echo "    Order Deny,Allow   "   >> /tmp/vhosts.conf_tempfile
+    echo "    Allow from all   "   >> /tmp/vhosts.conf_tempfile
+    echo "    Require all granted   "   >> /tmp/vhosts.conf_tempfile
+    echo "    RMode config   " >> /tmp/vhosts.conf_tempfile
+    echo "    RUidGid $1 www   " >> /tmp/vhosts.conf_tempfile
+    echo "</Directory>   "   >> /tmp/vhosts.conf_tempfile
+    echo "    ErrorLog logs/vhosts/$1/$1-error_log"  >> /tmp/vhosts.conf_tempfile
+    echo "    CustomLog logs/vhosts/$1/$1-access_log combined" >> /tmp/vhosts.conf_tempfile
+    echo "      php_admin_flag display_errors Off "   >> /tmp/vhosts.conf_tempfile
+    echo "      php_admin_flag allow_url_fopen Off "   >> /tmp/vhosts.conf_tempfile
+    echo "      php_admin_flag register_globals Off "   >> /tmp/vhosts.conf_tempfile
+    echo "      php_admin_flag magic_quotes_gpc Off "   >> /tmp/vhosts.conf_tempfile
+    echo "      php_admin_flag safe_mode Off "   >> /tmp/vhosts.conf_tempfile
+    echo "      php_admin_flag session.auto_start Off "   >> /tmp/vhosts.conf_tempfile
+    echo "      <IfModule cband_module> "   >> /tmp/vhosts.conf_tempfile
+    echo "        CBandUser cband$1"   >> /tmp/vhosts.conf_tempfile
+    echo "      </IfModule> "   >> /tmp/vhosts.conf_tempfile
+    echo "      RewriteEngine On "   >> /tmp/vhosts.conf_tempfile
+    echo "      RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) "   >> /tmp/vhosts.conf_tempfile
+    echo "      RewriteRule .* - [F] "   >> /tmp/vhosts.conf_tempfile
+    echo "      RewriteCond %{REQUEST_URI} ^/error/509.html$  "   >> /tmp/vhosts.conf_tempfile
+    echo "      RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]  "   >> /tmp/vhosts.conf_tempfile
+    echo "      Include conf/nobots.conf  "   >> /tmp/vhosts.conf_tempfile
+    echo "      <IfModule security2_module>  "   >> /tmp/vhosts.conf_tempfile
+    echo "      Include conf/modsec_rules/modsecurity-middle.conf  "   >> /tmp/vhosts.conf_tempfile
+    echo "      SecRuleEngine On  "   >> /tmp/vhosts.conf_tempfile
+    echo "      </IfModule>"   >> /tmp/vhosts.conf_tempfile
+    echo "</VirtualHost>" 
 } >> $vhost_temp
 
 # cp -arp /etc/httpd/conf.d/vhosts.conf /etc/httpd/conf.d/vhosts.conf.old
@@ -178,7 +192,7 @@ chmod 755 /etc/httpd/logs/vhosts/$1
 {
     echo ""
     echo "<IfModule cband_module>"
-    echo "<CBandUser cband$1>"
+    echo "  <CBandUser cband$1>"
     echo "     CBandUserLimit 3Gi"
     echo "     CBandUserPeriod 1D"
     echo "     <Location /throttle-me>"
@@ -188,7 +202,7 @@ chmod 755 /etc/httpd/logs/vhosts/$1
     echo "       AuthUserFile /usr/local/apache/conf/.$1"
     echo "       require user $1"
     echo "     </Location>"
-    echo "</CBandUser>"
+    echo "  </CBandUser>"
     echo "</IfModule>"
 } >> $cband_temp
 
@@ -211,13 +225,13 @@ chmod 755 /etc/httpd/logs/vhosts/$1
 
 # Apache 설정 테스트
 /usr/sbin/httpd -t
-# if [ $? -eq 0 ]; then
-#     echo "Apache 설정에 문제가 없습니다."
-#     /usr/sbin/httpd -k restart
-# else
-#     echo "Apache 설정에 오류가 있습니다."
-#     exit 1
-# fi
+if [ $? -eq 0 ]; then
+    echo "Apache 설정에 문제가 없습니다."
+    # /usr/sbin/httpd -k restart
+else
+    echo "Apache 설정에 오류가 있습니다."
+    exit 1
+fi
 
 # 임시 파일 삭제
 # rm -f $vhost_temp $cband_temp $db_temp

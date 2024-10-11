@@ -130,11 +130,3 @@ fi
 
 # 임시 파일 삭제
 rm -rf $vhost_temp $cband_temp $db_temp
-
-
-#!/bin/bash
-
-echo "$@"
-echo "$1"
-echo "$2"
-echo "$3"

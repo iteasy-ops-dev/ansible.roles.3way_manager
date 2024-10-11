@@ -9,15 +9,12 @@
 # $6: DB root 이름
 # $7: DB root 비밀번호
 
-# 임시파일 삭제
-rm -f /tmp/vhosts.conf_tempfile
-rm -f /tmp/cband.conf_tempfile
-rm -f /tmp/db.create.conf_tempfile
+current_date=$(date +"%Y-%m-%d")
 
-# 임시파일 생성
-touch /tmp/vhosts.conf_tempfile
-touch /tmp/cband.conf_tempfile
-touch /tmp/db.create.conf_tempfile
+# 임시파일 생성 (고유한 이름으로)
+vhost_temp=$(mktemp /tmp/vhosts.conf_tempfile.XXXXXX)
+cband_temp=$(mktemp /tmp/cband.conf_tempfile.XXXXXX)
+db_temp=$(mktemp /tmp/db.create.conf_tempfile.XXXXXX)
 
 # 사용자생성및 패스워드 설정
 /usr/sbin/useradd -m -s /bin/bash -d /home/$1 -g www $1
@@ -34,77 +31,167 @@ chown $1:www /home/$1/www
 mkdir /usr/local/apache/logs/vhosts/$1
 chmod 755  /usr/local/apache/logs/vhosts/$1
 
+# 인덱스 파일 추가
+echo "$1.web2002.kr" >> /home/$1/www/index.html
+chown $1:www /home/$1/www/index.html
+
 #가상호스트설정
-
 #vi /usr/local/apache/conf/httpd.conf
-echo "" >> /tmp/vhosts.conf_tempfile
-echo "<VirtualHost *:80>" >> /tmp/vhosts.conf_tempfile
-echo "    ServerAdmin webmaster@"    >> /tmp/vhosts.conf_tempfile
-echo "    DocumentRoot /home/$1/www"    >> /tmp/vhosts.conf_tempfile
-echo "    ServerName $1.web2002.kr"    >> /tmp/vhosts.conf_tempfile
-echo "    ServerAlias $1.web2002.kr"     >> /tmp/vhosts.conf_tempfile
-echo "<Directory /home/$1/www>"   >> /tmp/vhosts.conf_tempfile
-echo "    Options -ExecCGI   "   >> /tmp/vhosts.conf_tempfile
-echo "    AllowOverride All   "   >> /tmp/vhosts.conf_tempfile
-echo "    Order Deny,Allow   "   >> /tmp/vhosts.conf_tempfile
-echo "    Allow from all   "   >> /tmp/vhosts.conf_tempfile
-echo "</Directory>   "   >> /tmp/vhosts.conf_tempfile
-echo "    ErrorLog logs/vhosts/$1/$1-error_log"  >> /tmp/vhosts.conf_tempfile
-echo "    CustomLog logs/vhosts/$1/$1-access_log combined" >> /tmp/vhosts.conf_tempfile
-echo "      php_admin_flag display_errors Off "   >> /tmp/vhosts.conf_tempfile
-echo "      php_admin_flag allow_url_fopen Off "   >> /tmp/vhosts.conf_tempfile
-echo "      php_admin_flag register_globals Off "   >> /tmp/vhosts.conf_tempfile
-echo "      php_admin_flag magic_quotes_gpc Off "   >> /tmp/vhosts.conf_tempfile
-echo "      php_admin_flag safe_mode Off "   >> /tmp/vhosts.conf_tempfile
-echo "      php_admin_flag session.auto_start Off "   >> /tmp/vhosts.conf_tempfile
-echo "      <IfModule cband_module> "   >> /tmp/vhosts.conf_tempfile
-echo "        CBandUser cband$1"   >> /tmp/vhosts.conf_tempfile
-echo "      </IfModule> "   >> /tmp/vhosts.conf_tempfile
-echo "      RewriteEngine On "   >> /tmp/vhosts.conf_tempfile
-echo "      RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) "   >> /tmp/vhosts.conf_tempfile
-echo "      RewriteRule .* - [F] "   >> /tmp/vhosts.conf_tempfile
-echo "      RewriteCond %{REQUEST_URI} ^/error/509.html$  "   >> /tmp/vhosts.conf_tempfile
-echo "      RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]  "   >> /tmp/vhosts.conf_tempfile
-echo "      Include conf/nobots.conf  "   >> /tmp/vhosts.conf_tempfile
-echo "      <IfModule security2_module>  "   >> /tmp/vhosts.conf_tempfile
-echo "      Include conf/modsec_rules/modsecurity-middle.conf  "   >> /tmp/vhosts.conf_tempfile
-echo "      SecRuleEngine On  "   >> /tmp/vhosts.conf_tempfile
-echo "      </IfModule>"   >> /tmp/vhosts.conf_tempfile
-echo "</VirtualHost>"   >> /tmp/vhosts.conf_tempfile
+# echo "" >> /tmp/vhosts.conf_tempfile
+# echo "<VirtualHost *:80>" >> /tmp/vhosts.conf_tempfile
+# echo "    ServerAdmin webmaster@"    >> /tmp/vhosts.conf_tempfile
+# echo "    DocumentRoot /home/$1/www"    >> /tmp/vhosts.conf_tempfile
+# echo "    ServerName $1.web2002.kr"    >> /tmp/vhosts.conf_tempfile
+# echo "    ServerAlias $1.web2002.kr"     >> /tmp/vhosts.conf_tempfile
+# echo "<Directory /home/$1/www>"   >> /tmp/vhosts.conf_tempfile
+# echo "    Options -ExecCGI   "   >> /tmp/vhosts.conf_tempfile
+# echo "    AllowOverride All   "   >> /tmp/vhosts.conf_tempfile
+# echo "    Order Deny,Allow   "   >> /tmp/vhosts.conf_tempfile
+# echo "    Allow from all   "   >> /tmp/vhosts.conf_tempfile
+# echo "</Directory>   "   >> /tmp/vhosts.conf_tempfile
+# echo "    ErrorLog logs/vhosts/$1/$1-error_log"  >> /tmp/vhosts.conf_tempfile
+# echo "    CustomLog logs/vhosts/$1/$1-access_log combined" >> /tmp/vhosts.conf_tempfile
+# echo "      php_admin_flag display_errors Off "   >> /tmp/vhosts.conf_tempfile
+# echo "      php_admin_flag allow_url_fopen Off "   >> /tmp/vhosts.conf_tempfile
+# echo "      php_admin_flag register_globals Off "   >> /tmp/vhosts.conf_tempfile
+# echo "      php_admin_flag magic_quotes_gpc Off "   >> /tmp/vhosts.conf_tempfile
+# echo "      php_admin_flag safe_mode Off "   >> /tmp/vhosts.conf_tempfile
+# echo "      php_admin_flag session.auto_start Off "   >> /tmp/vhosts.conf_tempfile
+# echo "      <IfModule cband_module> "   >> /tmp/vhosts.conf_tempfile
+# echo "        CBandUser cband$1"   >> /tmp/vhosts.conf_tempfile
+# echo "      </IfModule> "   >> /tmp/vhosts.conf_tempfile
+# echo "      RewriteEngine On "   >> /tmp/vhosts.conf_tempfile
+# echo "      RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) "   >> /tmp/vhosts.conf_tempfile
+# echo "      RewriteRule .* - [F] "   >> /tmp/vhosts.conf_tempfile
+# echo "      RewriteCond %{REQUEST_URI} ^/error/509.html$  "   >> /tmp/vhosts.conf_tempfile
+# echo "      RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]  "   >> /tmp/vhosts.conf_tempfile
+# echo "      Include conf/nobots.conf  "   >> /tmp/vhosts.conf_tempfile
+# echo "      <IfModule security2_module>  "   >> /tmp/vhosts.conf_tempfile
+# echo "      Include conf/modsec_rules/modsecurity-middle.conf  "   >> /tmp/vhosts.conf_tempfile
+# echo "      SecRuleEngine On  "   >> /tmp/vhosts.conf_tempfile
+# echo "      </IfModule>"   >> /tmp/vhosts.conf_tempfile
+# echo "</VirtualHost>"   >> /tmp/vhosts.conf_tempfile
 
-cp -arp /usr/local/apache/conf/vhosts.conf /usr/local/apache/conf/vhosts.conf.old
-cat /tmp/vhosts.conf_tempfile >> /usr/local/apache/conf/vhosts.conf
+{
+    echo ""
+    echo "# == $1 # $current_date =="
+    echo "<VirtualHost *:80>"
+    echo "    ServerAdmin webmaster@"   
+    echo "    DocumentRoot /home/$1/www"   
+    echo "    ServerName $1.web2002.kr"   
+    echo "    ServerAlias $1.web2002.kr"    
+    echo "<Directory /home/$1/www>"  
+    echo "    Options -ExecCGI   "  
+    echo "    AllowOverride All   "  
+    echo "    Order Deny,Allow   "  
+    echo "    Allow from all   "  
+    echo "</Directory>   "  
+    echo "    ErrorLog logs/vhosts/$1/$1-error_log" 
+    echo "    CustomLog logs/vhosts/$1/$1-access_log combined"
+    echo "      php_admin_flag display_errors Off "  
+    echo "      php_admin_flag allow_url_fopen Off "  
+    echo "      php_admin_flag register_globals Off "  
+    echo "      php_admin_flag magic_quotes_gpc Off "  
+    echo "      php_admin_flag safe_mode Off "  
+    echo "      php_admin_flag session.auto_start Off "  
+    echo "      <IfModule cband_module> "  
+    echo "        CBandUser cband$1"  
+    echo "      </IfModule> "  
+    echo "      RewriteEngine On "  
+    echo "      RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) "  
+    echo "      RewriteRule .* - [F] "  
+    echo "      RewriteCond %{REQUEST_URI} ^/error/509.html$  "  
+    echo "      RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]  "  
+    echo "      Include conf/nobots.conf  "  
+    echo "      <IfModule security2_module>  "  
+    echo "      Include conf/modsec_rules/modsecurity-middle.conf  "  
+    echo "      SecRuleEngine On  "  
+    echo "      </IfModule>"  
+    echo "</VirtualHost>"  
+    echo "# == $1 # $current_date =="
+} >> $vhost_temp
 
-echo ""  >> /tmp/cband.conf_tempfile
-echo "<IfModule cband_module>"   >> /tmp/cband.conf_tempfile
-echo "     CBandRandomPulse Off"   >> /tmp/cband.conf_tempfile
-echo "     CBandDefaultExceededCode 509"   >> /tmp/cband.conf_tempfile
-echo "     ErrorDocument 509 /error/509.html"   >> /tmp/cband.conf_tempfile
-echo "<CBandUser cband$1>"   >> /tmp/cband.conf_tempfile
-echo "     CBandUserLimit 3Gi"   >> /tmp/cband.conf_tempfile
-echo "     CBandUserPeriod 1D"   >> /tmp/cband.conf_tempfile
-echo "     <Location /throttle-me>"   >> /tmp/cband.conf_tempfile
-echo "       SetHandler cband-status-me"   >> /tmp/cband.conf_tempfile
-echo "       AuthName "cband-status-me""   >> /tmp/cband.conf_tempfile
-echo "       AuthType Basic"   >> /tmp/cband.conf_tempfile
-echo "       AuthUserFile /usr/local/apache/conf/.$1"   >> /tmp/cband.conf_tempfile
-echo "       require user $1"   >> /tmp/cband.conf_tempfile
-echo "     </Location>"   >> /tmp/cband.conf_tempfile
-echo "   </CBandUser>"   >> /tmp/cband.conf_tempfile
-echo "</IfModule>"   >> /tmp/cband.conf_tempfile
+# cp -arp /usr/local/apache/conf/vhosts.conf /usr/local/apache/conf/vhosts.conf.old
+# cat /tmp/vhosts.conf_tempfile >> /usr/local/apache/conf/vhosts.conf
+# cat $vhost_temp >> /etc/httpd/conf.d/vhosts.conf
 
-cp -arp /usr/local/apache/conf/cband.conf /usr/local/apache/conf/cband.conf.old
-cat /tmp/cband.conf_tempfile >> /usr/local/apache/conf/cband.conf
+# echo ""  >> /tmp/cband.conf_tempfile
+# echo "<IfModule cband_module>"   >> /tmp/cband.conf_tempfile
+# echo "     CBandRandomPulse Off"   >> /tmp/cband.conf_tempfile
+# echo "     CBandDefaultExceededCode 509"   >> /tmp/cband.conf_tempfile
+# echo "     ErrorDocument 509 /error/509.html"   >> /tmp/cband.conf_tempfile
+# echo "<CBandUser cband$1>"   >> /tmp/cband.conf_tempfile
+# echo "     CBandUserLimit 3Gi"   >> /tmp/cband.conf_tempfile
+# echo "     CBandUserPeriod 1D"   >> /tmp/cband.conf_tempfile
+# echo "     <Location /throttle-me>"   >> /tmp/cband.conf_tempfile
+# echo "       SetHandler cband-status-me"   >> /tmp/cband.conf_tempfile
+# echo "       AuthName "cband-status-me""   >> /tmp/cband.conf_tempfile
+# echo "       AuthType Basic"   >> /tmp/cband.conf_tempfile
+# echo "       AuthUserFile /usr/local/apache/conf/.$1"   >> /tmp/cband.conf_tempfile
+# echo "       require user $1"   >> /tmp/cband.conf_tempfile
+# echo "     </Location>"   >> /tmp/cband.conf_tempfile
+# echo "   </CBandUser>"   >> /tmp/cband.conf_tempfile
+# echo "</IfModule>"   >> /tmp/cband.conf_tempfile
 
-echo "CREATE DATABASE IF NOT EXISTS $3;" >> /tmp/db.create.conf_tempfile 
-echo "DROP USER IF EXISTS '$4'@'%';" >> /tmp/db.create.conf_tempfile 
-echo "DROP USER IF EXISTS '$4'@'localhost';" >> /tmp/db.create.conf_tempfile 
-echo "CREATE USER '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
-echo "CREATE USER '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
-echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
-echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
-echo "FLUSH PRIVILEGES;" >> /tmp/db.create.conf_tempfile 
+# CBand 설정
+{
+    echo ""
+    echo "# == cband$1 # $current_date =="
+    echo "<IfModule cband_module>"
+    echo "     CBandRandomPulse Off"
+    echo "     CBandDefaultExceededCode 509"
+    echo "     ErrorDocument 509 /error/509.html"
+    echo "   <CBandUser cband$1>"
+    echo "     CBandUserLimit 3Gi"
+    echo "     CBandUserPeriod 1D"
+    echo "     <Location /throttle-me>"
+    echo "       SetHandler cband-status-me"
+    echo "       AuthName "cband-status-me""
+    echo "       AuthType Basic"
+    echo "       AuthUserFile /usr/local/apache/conf/.$1"
+    echo "       require user $1"
+    echo "     </Location>"
+    echo "   </CBandUser>"
+    echo "</IfModule>"
+    echo "# == cband$1 # $current_date =="
+} >> $cband_temp
 
-mysql -u $6 -p$7 < /tmp/db.create.conf_tempfile
+# cp -arp /usr/local/apache/conf/cband.conf /usr/local/apache/conf/cband.conf.old
+# cat /tmp/cband.conf_tempfile >> /usr/local/apache/conf/cband.conf
+# cat $cband_temp >> /etc/httpd/conf.d/cband.conf
+
+# echo "CREATE DATABASE IF NOT EXISTS $3;" >> /tmp/db.create.conf_tempfile 
+# echo "DROP USER IF EXISTS '$4'@'%';" >> /tmp/db.create.conf_tempfile 
+# echo "DROP USER IF EXISTS '$4'@'localhost';" >> /tmp/db.create.conf_tempfile 
+# echo "CREATE USER '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
+# echo "CREATE USER '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
+# echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'%' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
+# echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'localhost' IDENTIFIED BY '$5';" >> /tmp/db.create.conf_tempfile 
+# echo "FLUSH PRIVILEGES;" >> /tmp/db.create.conf_tempfile 
+
+# MySQL DB 및 사용자 생성
+{
+    echo "CREATE DATABASE IF NOT EXISTS $3;"
+    echo "DROP USER IF EXISTS '$4'@'%';"
+    echo "DROP USER IF EXISTS '$4'@'localhost';"
+    echo "CREATE USER '$4'@'%' IDENTIFIED BY '$5';"
+    echo "CREATE USER '$4'@'localhost' IDENTIFIED BY '$5';"
+    echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'%' IDENTIFIED BY '$5';"
+    echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'localhost' IDENTIFIED BY '$5';"
+    echo "FLUSH PRIVILEGES;"
+} >> $db_temp
+
+# mysql -u $6 -p$7 < /tmp/db.create.conf_tempfile
+# mysql -u "$6" -p"$7" < "$db_temp"
 
 /usr/local/apache/bin/httpd -t
+if [ $? -eq 0 ]; then
+    echo "Apache 설정에 문제가 없습니다."
+    # /usr/sbin/httpd -k restart
+else
+    echo "Apache 설정에 오류가 있습니다."
+    exit 1
+fi
+
+# 임시 파일 삭제
+# rm -rf $vhost_temp $cband_temp $db_temp

@@ -13,10 +13,16 @@ rm -f /tmp/db.remove.conf_tempfile
 # 임시파일 생성
 touch /tmp/db.remove.conf_tempfile
 
+
+# vhost 삭제
+sed -i.bak "$(/usr/sbin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2),/<\/VirtualHost>/ s/^/#/" /usr/local/apache/conf/vhosts.conf
+# cband 삭제
+sed -i.bak "/<CBandUser cband$1>/,/<\/CBandUser>/ s/^/#/" /usr/local/apache/conf/cband.conf
+
 # 사용자 삭제
 /usr/sbin/userdel $1
 rm -rf /home/$1
-rm -rf /etc/httpd/logs/vhosts/$1
+rm -rf /usr/local/apache/logs/vhosts/$1
 
 echo "DROP DATABASE IF EXISTS $2;" >> /tmp/db.remove.conf_tempfile 
 echo "DROP USER IF EXISTS '$3'@'%';" >> /tmp/db.remove.conf_tempfile 
@@ -24,4 +30,4 @@ echo "DROP USER IF EXISTS '$3'@'localhost';" >> /tmp/db.remove.conf_tempfile
 
 mysql -u $4 -p$5 < /tmp/db.remove.conf_tempfile
 
-/usr/sbin/apachectl -t
+/usr/local/apache/bin/httpd -t

@@ -107,4 +107,4 @@ echo "FLUSH PRIVILEGES;" >> /tmp/db.create.conf_tempfile
 
 mysql -u $6 -p$7 < /tmp/db.create.conf_tempfile
 
-/usr/sbin/apachectl -t
+/usr/local/apache/bin/httpd -t

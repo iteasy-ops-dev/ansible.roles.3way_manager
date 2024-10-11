@@ -1,0 +1,97 @@
+# #!/bin/bash
+
+# # 변수
+# # $1: 계정이름
+# # $2: DB이름
+# # $3: DB 계정
+# # $4: DB root 이름
+# # $5: DB root 비밀번호
+
+# # 임시파일 삭제
+# rm -f /tmp/db.remove.conf_tempfile
+
+# # 임시파일 생성
+# touch /tmp/db.remove.conf_tempfile
+
+# # vhost 삭제
+# sed -i.bak "$(/usr/sbin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2),/<\/VirtualHost>/ s/^/#/" /etc/httpd/conf.d/vhosts.conf
+# # cband 삭제
+# sed -i.bak "/<CBandUser cband$1>/,/<\/CBandUser>/ s/^/#/" /etc/httpd/conf.d/cband.conf
+
+# # 사용자 삭제
+# /usr/sbin/userdel $1
+# rm -rf /home/$1
+# rm -rf /etc/httpd/logs/vhosts/$1
+
+# echo "DROP DATABASE IF EXISTS $2;" >> /tmp/db.remove.conf_tempfile 
+# echo "DROP USER IF EXISTS '$3'@'%';" >> /tmp/db.remove.conf_tempfile 
+# echo "DROP USER IF EXISTS '$3'@'localhost';" >> /tmp/db.remove.conf_tempfile 
+
+# mysql -u $4 -p$5 < /tmp/db.remove.conf_tempfile
+
+# /usr/sbin/httpd -t
+
+#!/bin/bash
+
+# 변수
+# $1: 계정이름
+# $2: DB이름
+# $3: DB 계정
+# $4: DB root 이름
+# $5: DB root 비밀번호
+
+# 임시파일 삭제
+rm -f /tmp/db.remove.conf_tempfile
+
+# 임시파일 생성
+touch /tmp/db.remove.conf_tempfile
+
+# vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
+vhost_line=$(/usr/sbin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
+if [ -n "$vhost_line" ]; then
+    sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" /etc/httpd/conf.d/vhosts.conf
+    echo "vhost 설정에서 $1 가상 호스트를 주석 처리했습니다."
+else
+    echo "vhost 설정에서 $1 가상 호스트를 찾을 수 없습니다."
+fi
+
+# cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
+if grep -q "<CBandUser cband$1>" /etc/httpd/conf.d/cband.conf; then
+    sed -i.bak "/<CBandUser cband$1>/,/<\/CBandUser>/ s/^/#/" /etc/httpd/conf.d/cband.conf
+    echo "CBand 설정에서 $1 사용자 설정을 주석 처리했습니다."
+else
+    echo "CBand 설정에서 $1 사용자를 찾을 수 없습니다."
+fi
+
+# 사용자 삭제
+/usr/sbin/userdel $1
+rm -rf /home/$1
+rm -rf /etc/httpd/logs/vhosts/$1
+echo "$1 계정 및 관련 디렉토리를 삭제했습니다."
+
+# 데이터베이스 및 DB 사용자 삭제
+{
+    echo "DROP DATABASE IF EXISTS $2;"
+    echo "DROP USER IF EXISTS '$3'@'%';"
+    echo "DROP USER IF EXISTS '$3'@'localhost';"
+} >> /tmp/db.remove.conf_tempfile
+
+# mysql -u $4 -p$5 < /tmp/db.remove.conf_tempfile
+# if [ $? -eq 0 ]; then
+#     echo "$2 데이터베이스 및 $3 DB 사용자 삭제에 성공했습니다."
+# else
+#     echo "데이터베이스 삭제에 실패했습니다."
+# fi
+
+# Apache 설정 문법 검사
+/usr/sbin/httpd -t
+# if [ $? -eq 0 ]; then
+#     echo "Apache 설정 파일에 문제가 없습니다."
+#     /usr/sbin/httpd -k graceful  # Apache 재시작
+# else
+#     echo "Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
+#     exit 1
+# fi
+
+# 임시 파일 삭제
+# rm -f /tmp/db.remove.conf_tempfile

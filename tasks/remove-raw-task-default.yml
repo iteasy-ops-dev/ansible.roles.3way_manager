@@ -14,8 +14,7 @@
 
 - name: Set the unique filename
   set_fact:
-    unique_filename: "{{ mktemp_output.stdout }}"
-
+    unique_filename: "{{ mktemp_output.stdout | trim }}"
 - name: Download Shell script
   become_user: root
   become: true

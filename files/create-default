@@ -1,123 +1,178 @@
+
+
 #!/bin/bash
 
-# 변수
-# $1: 계정이름
-# $2: 계정 패스워드
-# $3: DB이름
-# $4: DB 계정
-# $5: DB 비밀번호
-# $6: DB root 이름
-# $7: DB root 비밀번호
+# 입력 변수
+# $1: 사용자 계정 이름
+# $2: 사용자 계정 비밀번호
+# $3: DB 이름
+# $4: DB 사용자 계정
+# $5: DB 사용자 비밀번호
+# $6: DB root 사용자 이름
+# $7: DB root 사용자 비밀번호
 
-current_date=$(date +"%Y-%m-%d")
+# 변수 선언
+USER_ACCOUNT="$1"
+USER_PASSWORD="$2"
+DB_NAME="$3"
+DB_USER="$4"
+DB_USER_PASSWORD="$5"
+DB_ROOT_USER="$6"
+DB_ROOT_PASSWORD="$7"
+HOME_DIR="/home"
+VHOST_CONF_DIR="/usr/local/apache/conf/vhosts"
+CBAND_CONF_DIR="/usr/local/apache/conf/cband"
+LOG_DIR="/usr/local/apache/logs/vhosts/$USER_ACCOUNT"
+CURRENT_DATE=$(date +"%Y-%m-%d")
+
+# 디버깅용 출력
+echo "=== 입력 변수 확인 ==="
+echo "USER_ACCOUNT: $USER_ACCOUNT"
+echo "USER_PASSWORD: $USER_PASSWORD"
+echo "DB_NAME: $DB_NAME"
+echo "DB_USER: $DB_USER"
+echo "DB_USER_PASSWORD: $DB_USER_PASSWORD"
+echo "DB_ROOT_USER: $DB_ROOT_USER"
+echo "DB_ROOT_PASSWORD: $DB_ROOT_PASSWORD"
+echo "VHOST_CONF_DIR: $VHOST_CONF_DIR"
+echo "CBAND_CONF_DIR: $CBAND_CONF_DIR"
+echo "LOG_DIR: $LOG_DIR"
+echo "CURRENT_DATE: $CURRENT_DATE"
+echo "===================="
+
+# MySQL 접속 확인
+echo "MySQL 접속 확인 중..."
+mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+if [ $? -ne 0 ]; then
+    echo "MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+    exit 1
+else
+    echo "MySQL 로그인에 성공했습니다."
+fi
 
 # 임시파일 생성 (고유한 이름으로)
 vhost_temp=$(mktemp /tmp/vhosts.conf_tempfile.XXXXXX)
 cband_temp=$(mktemp /tmp/cband.conf_tempfile.XXXXXX)
 db_temp=$(mktemp /tmp/db.create.conf_tempfile.XXXXXX)
 
-# 사용자생성및 패스워드 설정
-/usr/sbin/useradd -m -s /bin/bash -d /home/$1 -g www $1
-echo "$2" | passwd --stdin $1  # 패스워드 설정
+# 사용자 생성 및 패스워드 설정
+/usr/sbin/useradd -m -s /bin/bash -d $HOME_DIR/$USER_ACCOUNT -g www $USER_ACCOUNT
+echo "$USER_PASSWORD" | passwd --stdin $USER_ACCOUNT  # 패스워드 설정
+if [ $? -eq 0 ]; then
+    echo "사용자 $USER_ACCOUNT 계정 생성 및 비밀번호 설정 성공."
+else
+    echo "사용자 $USER_ACCOUNT 계정 생성 실패."
+    exit 1
+fi
 
-#홈페이지디렉토리생성및 설정
-chmod 701 /home/$1
-mkdir -p /home/$1/www
-chmod 755 /home/$1/www
-chown $1:www /home/$1/www
-mkdir /usr/local/apache/logs/vhosts/$1
-chmod 755 /usr/local/apache/logs/vhosts/$1
+# 홈페이지 디렉토리 생성 및 설정
+chmod 701 $HOME_DIR/$USER_ACCOUNT
+mkdir -p $HOME_DIR/$USER_ACCOUNT/www
+chmod 755 $HOME_DIR/$USER_ACCOUNT/www
+chown $USER_ACCOUNT:www $HOME_DIR/$USER_ACCOUNT/www
+mkdir -p "$LOG_DIR"
+chmod 755 "$LOG_DIR"
 
 # 인덱스 파일 추가
-echo "$1.web2002.kr" >> /home/$1/www/index.html
-chown $1:www /home/$1/www/index.html
+echo "$USER_ACCOUNT.web2002.kr" > $HOME_DIR/$USER_ACCOUNT/www/index.html
+chown $USER_ACCOUNT:www $HOME_DIR/$USER_ACCOUNT/www/index.html
 
-#가상호스트설정
+# 가상호스트 설정
 {
     echo ""
-    echo "# == $1 # $current_date =="
+    echo "# == $USER_ACCOUNT # $CURRENT_DATE =="
     echo "<VirtualHost *:80>"
-    echo "    ServerAdmin webmaster@"   
-    echo "    DocumentRoot /home/$1/www"   
-    echo "    ServerName $1.web2002.kr"   
-    echo "    ServerAlias $1.web2002.kr"    
-    echo "<Directory /home/$1/www>"  
-    echo "    Options -ExecCGI   "  
-    echo "    AllowOverride All   "  
-    echo "    Order Deny,Allow   "  
-    echo "    Allow from all   "  
-    echo "</Directory>   "  
-    echo "    ErrorLog logs/vhosts/$1/$1-error_log" 
-    echo "    CustomLog logs/vhosts/$1/$1-access_log combined"
-    echo "      php_admin_flag display_errors Off "  
-    echo "      php_admin_flag allow_url_fopen Off "  
-    echo "      php_admin_flag register_globals Off "  
-    echo "      php_admin_flag magic_quotes_gpc Off "  
-    echo "      php_admin_flag safe_mode Off "  
-    echo "      php_admin_flag session.auto_start Off "  
-    echo "      <IfModule cband_module> "  
-    echo "        CBandUser cband$1"  
-    echo "      </IfModule> "  
-    echo "      RewriteEngine On "  
-    echo "      RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) "  
-    echo "      RewriteRule .* - [F] "  
-    echo "      RewriteCond %{REQUEST_URI} ^/error/509.html$  "  
-    echo "      RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]  "  
-    echo "      Include conf/nobots.conf  "  
-    echo "      <IfModule security2_module>  "  
-    echo "      Include conf/modsec_rules/modsecurity-middle.conf  "  
-    echo "      SecRuleEngine On  "  
-    echo "      </IfModule>"  
-    echo "</VirtualHost>"  
-    echo "# == $1 # $current_date =="
+    echo "    ServerAdmin webmaster@"
+    echo "    DocumentRoot $HOME_DIR/$USER_ACCOUNT/www"
+    echo "    ServerName $USER_ACCOUNT.web2002.kr"
+    echo "    ServerAlias $USER_ACCOUNT.web2002.kr"
+    echo "    <Directory $HOME_DIR/$USER_ACCOUNT/www>"
+    echo "        Options -ExecCGI"
+    echo "        AllowOverride All"
+    echo "        Order Deny,Allow"
+    echo "        Allow from all"
+    echo "    </Directory>"
+    echo "    ErrorLog logs/vhosts/$USER_ACCOUNT/$USER_ACCOUNT-error_log"
+    echo "    CustomLog logs/vhosts/$USER_ACCOUNT/$USER_ACCOUNT-access_log combined"
+    echo "    php_admin_flag display_errors Off"
+    echo "    php_admin_flag allow_url_fopen Off"
+    echo "    php_admin_flag register_globals Off"
+    echo "    php_admin_flag magic_quotes_gpc Off"
+    echo "    php_admin_flag safe_mode Off"
+    echo "    php_admin_flag session.auto_start Off"
+    echo "    <IfModule cband_module>"
+    echo "        CBandUser cband$USER_ACCOUNT"
+    echo "    </IfModule>"
+    echo "    RewriteEngine On"
+    echo "    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)"
+    echo "    RewriteRule .* - [F]"
+    echo "    RewriteCond %{REQUEST_URI} ^/error/509.html$"
+    echo "    RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]"
+    echo "    Include conf/nobots.conf"
+    echo "    <IfModule security2_module>"
+    echo "        Include conf/modsec_rules/modsecurity-middle.conf"
+    echo "        SecRuleEngine On"
+    echo "    </IfModule>"
+    echo "</VirtualHost>"
+    echo "# == $USER_ACCOUNT # $CURRENT_DATE =="
 } >> $vhost_temp
 
-cp -arp /usr/local/apache/conf/vhosts.conf /usr/local/apache/conf/vhosts.conf.old
-cat $vhost_temp >> /usr/local/apache/conf/vhosts.conf
+# Vhosts 파일 백업 및 추가
+cp -arp $VHOST_CONF_DIR.conf $VHOST_CONF_DIR.conf.old
+cat $vhost_temp >> $VHOST_CONF_DIR.conf
 
 # CBand 설정
 {
     echo ""
-    echo "# == cband$1 # $current_date =="
+    echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
     echo "<IfModule cband_module>"
-    echo "     CBandRandomPulse Off"
-    echo "     CBandDefaultExceededCode 509"
-    echo "     ErrorDocument 509 /error/509.html"
-    echo "   <CBandUser cband$1>"
-    echo "     CBandUserLimit 3Gi"
-    echo "     CBandUserPeriod 1D"
-    echo "     <Location /throttle-me>"
-    echo "       SetHandler cband-status-me"
-    echo "       AuthName "cband-status-me""
-    echo "       AuthType Basic"
-    echo "       AuthUserFile /usr/local/apache/conf/.$1"
-    echo "       require user $1"
-    echo "     </Location>"
-    echo "   </CBandUser>"
+    echo "    CBandRandomPulse Off"
+    echo "    CBandDefaultExceededCode 509"
+    echo "    ErrorDocument 509 /error/509.html"
+    echo "    <CBandUser cband$USER_ACCOUNT>"
+    echo "        CBandUserLimit 3Gi"
+    echo "        CBandUserPeriod 1D"
+    echo "        <Location /throttle-me>"
+    echo "            SetHandler cband-status-me"
+    echo "            AuthName 'cband-status-me'"
+    echo "            AuthType Basic"
+    echo "            AuthUserFile /usr/local/apache/conf/.$USER_ACCOUNT"
+    echo "            require user $USER_ACCOUNT"
+    echo "        </Location>"
+    echo "    </CBandUser>"
     echo "</IfModule>"
-    echo "# == cband$1 # $current_date =="
+    echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
 } >> $cband_temp
 
-cp -arp /usr/local/apache/conf/cband.conf /usr/local/apache/conf/cband.conf.old
-cat $cband_temp >> /usr/local/apache/conf/cband.conf
+# CBand 파일 백업 및 추가
+cp -arp $CBAND_CONF_DIR.conf $CBAND_CONF_DIR.conf.old
+cat $cband_temp >> $CBAND_CONF_DIR.conf
 
 # MySQL DB 및 사용자 생성
 {
-    echo "CREATE DATABASE IF NOT EXISTS $3;"
-    echo "DROP USER IF EXISTS '$4'@'%';"
-    echo "DROP USER IF EXISTS '$4'@'localhost';"
-    echo "CREATE USER '$4'@'%' IDENTIFIED BY '$5';"
-    echo "CREATE USER '$4'@'localhost' IDENTIFIED BY '$5';"
-    echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'%' IDENTIFIED BY '$5';"
-    echo "GRANT ALL PRIVILEGES ON $3.* TO '$4'@'localhost' IDENTIFIED BY '$5';"
+    echo "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
+    echo "DROP USER IF EXISTS '$DB_USER'@'%';"
+    echo "DROP USER IF EXISTS '$DB_USER'@'localhost';"
+    echo "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
     echo "FLUSH PRIVILEGES;"
 } >> $db_temp
 
-mysql -u "$6" -p"$7" < "$db_temp"
+# MySQL 쿼리 실행
+mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
+if [ $? -eq 0 ]; then
+    echo "MySQL DB 및 사용자 생성 성공."
+else
+    echo "MySQL DB 및 사용자 생성 실패."
+    exit 1
+fi
 
+# Apache 설정 테스트 및 적용
 /usr/local/apache/bin/httpd -t
 if [ $? -eq 0 ]; then
-    echo "Apache 설정에 문제가 없습니다."
+    echo "Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
     # /usr/sbin/httpd -k restart
 else
     echo "Apache 설정에 오류가 있습니다."
@@ -126,3 +181,4 @@ fi
 
 # 임시 파일 삭제
 rm -rf $vhost_temp $cband_temp $db_temp
+echo "임시 파일 삭제 완료. 스크립트가 종료되었습니다."

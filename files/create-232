@@ -113,7 +113,7 @@ cat $cband_temp >> /usr/local/apache/conf/cband.conf
     echo "FLUSH PRIVILEGES;"
 } >> $db_temp
 
-# mysql -u "$6" -p"$7" < "$db_temp"
+mysql -u "$6" -p"$7" < "$db_temp"
 
 /usr/local/apache/bin/httpd -t
 if [ $? -eq 0 ]; then

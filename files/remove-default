@@ -1,55 +1,151 @@
+# #!/bin/bash
+
+# # 변수
+# # $1: 계정이름
+# # $2: DB이름
+# # $3: DB 계정
+# # $4: DB root 이름
+# # $5: DB root 비밀번호
+
+# # 임시파일 생성
+# db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+
+# # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
+# vhost_line=$(/usr/local/apache/bin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
+# if [ -n "$vhost_line" ]; then
+#     sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" /usr/local/apache/conf/vhosts.conf
+#     echo "vhost 설정에서 $1 가상 호스트를 주석 처리했습니다."
+# else
+#     echo "vhost 설정에서 $1 가상 호스트를 찾을 수 없습니다."
+# fi
+
+# # cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
+# if grep -q "<CBandUser cband$1>" /usr/local/apache/conf/cband.conf; then
+#     sed -i.bak "/<CBandUser cband$1>/,/<\/CBandUser>/ s/^/#/" /usr/local/apache/conf/cband.conf
+#     echo "CBand 설정에서 $1 사용자 설정을 주석 처리했습니다."
+# else
+#     echo "CBand 설정에서 $1 사용자를 찾을 수 없습니다."
+# fi
+
+# # 사용자 삭제
+# /usr/sbin/userdel $1
+# rm -rf /home/$1
+# rm -rf /usr/local/apache/logs/vhosts/$1
+# echo "$1 계정 및 관련 디렉토리를 삭제했습니다."
+
+# # 데이터베이스 및 DB 사용자 삭제
+# {
+#     echo "DROP DATABASE IF EXISTS $2;"
+#     echo "DROP USER IF EXISTS '$3'@'%';"
+#     echo "DROP USER IF EXISTS '$3'@'localhost';"
+# } >> $db_temp
+
+# mysql -u"$4" -p"$5" < "$db_temp"
+# if [ $? -eq 0 ]; then
+#     echo "$2 데이터베이스 및 $3 DB 사용자 삭제에 성공했습니다."
+# else
+#     echo "데이터베이스 삭제에 실패했습니다."
+# fi
+
+# /usr/local/apache/bin/httpd -t
+# if [ $? -eq 0 ]; then
+#     echo "Apache 설정 파일에 문제가 없습니다."
+#     # /usr/sbin/httpd -k graceful  # Apache 재시작
+# else
+#     echo "Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
+#     exit 1
+# fi
+
+# # 임시 파일 삭제
+# rm -rf $db_temp
+
 #!/bin/bash
 
-# 변수
-# $1: 계정이름
-# $2: DB이름
-# $3: DB 계정
-# $4: DB root 이름
-# $5: DB root 비밀번호
+# 입력 변수
+# $1: 사용자 계정 이름
+# $2: DB 이름
+# $3: DB 사용자 계정
+# $4: DB root 사용자 이름
+# $5: DB root 사용자 비밀번호
+
+# 변수 선언
+USER_ACCOUNT="$1"
+DB_NAME="$2"
+DB_USER="$3"
+DB_ROOT_USER="$4"
+DB_ROOT_PASSWORD="$5"
+HOME_DIR="/home"
+VHOST_CONF_DIR="/usr/local/apache/conf/vhosts.conf"
+CBAND_CONF_DIR="/usr/local/apache/conf/cband.conf"
+LOG_DIR="/usr/local/apache/logs/vhosts/$USER_ACCOUNT"
+CURRENT_DATE=$(date +"%Y-%m-%d")
+
+# 디버깅용 출력
+echo "=== 입력 변수 확인 ==="
+echo "USER_ACCOUNT: $USER_ACCOUNT"
+echo "DB_NAME: $DB_NAME"
+echo "DB_USER: $DB_USER"
+echo "DB_ROOT_USER: $DB_ROOT_USER"
+echo "DB_ROOT_PASSWORD: $DB_ROOT_PASSWORD"
+echo "VHOST_CONF_DIR: $VHOST_CONF_DIR"
+echo "CBAND_CONF_DIR: $CBAND_CONF_DIR"
+echo "LOG_DIR: $LOG_DIR"
+echo "CURRENT_DATE: $CURRENT_DATE"
+echo "===================="
 
 # 임시파일 생성
 db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 
 # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
-vhost_line=$(/usr/local/apache/bin/httpd -S | grep $1.web2002.kr | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
+echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
+vhost_line=$(/usr/local/apache/bin/httpd -S | grep "$USER_ACCOUNT.web2002.kr" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
 if [ -n "$vhost_line" ]; then
-    sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" /usr/local/apache/conf/vhosts.conf
-    echo "vhost 설정에서 $1 가상 호스트를 주석 처리했습니다."
+    sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_DIR"
+    echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
 else
-    echo "vhost 설정에서 $1 가상 호스트를 찾을 수 없습니다."
+    echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
 fi
 
 # cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
-if grep -q "<CBandUser cband$1>" /usr/local/apache/conf/cband.conf; then
-    sed -i.bak "/<CBandUser cband$1>/,/<\/CBandUser>/ s/^/#/" /usr/local/apache/conf/cband.conf
-    echo "CBand 설정에서 $1 사용자 설정을 주석 처리했습니다."
+echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
+if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_DIR"; then
+    sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_DIR"
+    echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
 else
-    echo "CBand 설정에서 $1 사용자를 찾을 수 없습니다."
+    echo "CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."
 fi
 
-# 사용자 삭제
-/usr/sbin/userdel $1
-rm -rf /home/$1
-rm -rf /usr/local/apache/logs/vhosts/$1
-echo "$1 계정 및 관련 디렉토리를 삭제했습니다."
+# 사용자 삭제 및 디렉토리 정리
+echo "$USER_ACCOUNT 사용자 및 관련 디렉토리 삭제 중..."
+/usr/sbin/userdel "$USER_ACCOUNT"
+rm -rf "$HOME_DIR/$USER_ACCOUNT"
+rm -rf "$LOG_DIR"
+if [ $? -eq 0 ]; then
+    echo "$USER_ACCOUNT 계정 및 관련 디렉토리를 삭제했습니다."
+else
+    echo "$USER_ACCOUNT 계정 삭제에 실패했습니다."
+fi
 
 # 데이터베이스 및 DB 사용자 삭제
+echo "데이터베이스 및 DB 사용자 삭제 중..."
 {
-    echo "DROP DATABASE IF EXISTS $2;"
-    echo "DROP USER IF EXISTS '$3'@'%';"
-    echo "DROP USER IF EXISTS '$3'@'localhost';"
-} >> $db_temp
+    echo "DROP DATABASE IF EXISTS $DB_NAME;"
+    echo "DROP USER IF EXISTS '$DB_USER'@'%';"
+    echo "DROP USER IF EXISTS '$DB_USER'@'localhost';"
+} >> "$db_temp"
 
-mysql -u"$4" -p"$5" < "$db_temp"
+mysql -u"$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
 if [ $? -eq 0 ]; then
-    echo "$2 데이터베이스 및 $3 DB 사용자 삭제에 성공했습니다."
+    echo "$DB_NAME 데이터베이스 및 $DB_USER DB 사용자 삭제에 성공했습니다."
 else
     echo "데이터베이스 삭제에 실패했습니다."
 fi
 
+# Apache 설정 테스트 및 적용
+echo "Apache 설정 파일 테스트 중..."
 /usr/local/apache/bin/httpd -t
 if [ $? -eq 0 ]; then
-    echo "Apache 설정 파일에 문제가 없습니다."
+    echo "Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
     # /usr/sbin/httpd -k graceful  # Apache 재시작
 else
     echo "Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
@@ -57,4 +153,5 @@ else
 fi
 
 # 임시 파일 삭제
-rm -rf $db_temp
+rm -rf "$db_temp"
+echo "임시 파일 삭제 완료. 스크립트가 종료되었습니다."

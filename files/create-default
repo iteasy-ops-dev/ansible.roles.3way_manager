@@ -20,8 +20,8 @@ DB_USER_PASSWORD="$5"
 DB_ROOT_USER="$6"
 DB_ROOT_PASSWORD="$7"
 HOME_DIR="/home"
-VHOST_CONF_DIR="/usr/local/apache/conf/vhosts"
-CBAND_CONF_DIR="/usr/local/apache/conf/cband"
+VHOST_CONF_NAME="/usr/local/apache/conf/vhosts.conf"
+CBAND_CONF_NAME="/usr/local/apache/conf/cband.conf"
 LOG_DIR="/usr/local/apache/logs/vhosts/$USER_ACCOUNT"
 CURRENT_DATE=$(date +"%Y-%m-%d")
 
@@ -34,8 +34,8 @@ echo "DB_USER: $DB_USER"
 echo "DB_USER_PASSWORD: $DB_USER_PASSWORD"
 echo "DB_ROOT_USER: $DB_ROOT_USER"
 echo "DB_ROOT_PASSWORD: $DB_ROOT_PASSWORD"
-echo "VHOST_CONF_DIR: $VHOST_CONF_DIR"
-echo "CBAND_CONF_DIR: $CBAND_CONF_DIR"
+echo "VHOST_CONF_NAME: $VHOST_CONF_NAME"
+echo "CBAND_CONF_NAME: $CBAND_CONF_NAME"
 echo "LOG_DIR: $LOG_DIR"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
@@ -118,8 +118,8 @@ chown $USER_ACCOUNT:www $HOME_DIR/$USER_ACCOUNT/www/index.html
 } >> $vhost_temp
 
 # Vhosts 파일 백업 및 추가
-cp -arp $VHOST_CONF_DIR.conf $VHOST_CONF_DIR.conf.old
-cat $vhost_temp >> $VHOST_CONF_DIR.conf
+cp -arp $VHOST_CONF_NAME $VHOST_CONF_NAME.old
+cat $vhost_temp >> $VHOST_CONF_NAME
 
 # CBand 설정
 {
@@ -145,20 +145,41 @@ cat $vhost_temp >> $VHOST_CONF_DIR.conf
 } >> $cband_temp
 
 # CBand 파일 백업 및 추가
-cp -arp $CBAND_CONF_DIR.conf $CBAND_CONF_DIR.conf.old
-cat $cband_temp >> $CBAND_CONF_DIR.conf
+cp -arp $CBAND_CONF_NAME $CBAND_CONF_NAME.old
+cat $cband_temp >> $CBAND_CONF_NAME
+
+# MySQL DB 및 사용자 생성
+# {
+#     echo "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
+#     echo "DROP USER IF EXISTS '$DB_USER'@'%';"
+#     echo "DROP USER IF EXISTS '$DB_USER'@'localhost';"
+#     echo "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+#     echo "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+#     echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+#     echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+#     echo "FLUSH PRIVILEGES;"
+# } >> $db_temp
+
+# # MySQL 쿼리 실행
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
+# if [ $? -eq 0 ]; then
+#     echo "MySQL DB 및 사용자 생성 성공."
+# else
+#     echo "MySQL DB 및 사용자 생성 실패."
+#     exit 1
+# fi
 
 # MySQL DB 및 사용자 생성
 {
-    echo "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
-    echo "DROP USER IF EXISTS '$DB_USER'@'%';"
-    echo "DROP USER IF EXISTS '$DB_USER'@'localhost';"
-    echo "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`;"
+    echo "DROP USER IF EXISTS $DB_USER@'%';"
+    echo "DROP USER IF EXISTS $DB_USER@'localhost';"
+    echo "CREATE USER $DB_USER@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "CREATE USER $DB_USER@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO $DB_USER@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO $DB_USER@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
     echo "FLUSH PRIVILEGES;"
-} >> $db_temp
+} >> "$db_temp"
 
 # MySQL 쿼리 실행
 mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"

@@ -75,8 +75,8 @@ DB_USER="$3"
 DB_ROOT_USER="$4"
 DB_ROOT_PASSWORD="$5"
 HOME_DIR="/home"
-VHOST_CONF_DIR="/usr/local/apache/conf/vhosts.conf"
-CBAND_CONF_DIR="/usr/local/apache/conf/cband.conf"
+VHOST_CONF_NAME="/usr/local/apache/conf/vhosts.conf"
+CBAND_CONF_NAME="/usr/local/apache/conf/cband.conf"
 LOG_DIR="/usr/local/apache/logs/vhosts/$USER_ACCOUNT"
 CURRENT_DATE=$(date +"%Y-%m-%d")
 
@@ -87,8 +87,8 @@ echo "DB_NAME: $DB_NAME"
 echo "DB_USER: $DB_USER"
 echo "DB_ROOT_USER: $DB_ROOT_USER"
 echo "DB_ROOT_PASSWORD: $DB_ROOT_PASSWORD"
-echo "VHOST_CONF_DIR: $VHOST_CONF_DIR"
-echo "CBAND_CONF_DIR: $CBAND_CONF_DIR"
+echo "VHOST_CONF_NAME: $VHOST_CONF_NAME"
+echo "CBAND_CONF_NAME: $CBAND_CONF_NAME"
 echo "LOG_DIR: $LOG_DIR"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
@@ -100,7 +100,7 @@ db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
 vhost_line=$(/usr/local/apache/bin/httpd -S | grep "$USER_ACCOUNT.web2002.kr" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
 if [ -n "$vhost_line" ]; then
-    sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_DIR"
+    sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_NAME"
     echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
 else
     echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
@@ -108,8 +108,8 @@ fi
 
 # cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
 echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
-if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_DIR"; then
-    sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_DIR"
+if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME"; then
+    sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_NAME"
     echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
 else
     echo "CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."

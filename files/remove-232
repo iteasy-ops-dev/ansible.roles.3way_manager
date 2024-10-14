@@ -66,10 +66,11 @@ else
     echo "❗️ $USER_ACCOUNT 계정 삭제에 실패했습니다."
 fi
 
+
 echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
 {
     echo "DROP DATABASE \`$DB_NAME\`;"
-    echo "DELETE FROM mysql.user WHERE User="$DB_USER""
+    echo "DELETE FROM mysql.user WHERE User="$DB_USER";"
     echo "FLUSH PRIVILEGES;"
 } >> "$db_temp"
 

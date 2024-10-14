@@ -1,13 +1,4 @@
 ---
-# tasks file for iteasy.ansible.roles.3way_manager
-# - name: Generate a random string for filename
-#   set_fact:
-#     random_suffix: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
-
-# - name: Create unique filename using random string
-#   set_fact:
-#     unique_filename: "/tmp/create_{{ random_suffix }}"
-
 - name: Generate a unique filename using mktemp
   raw: mktemp /tmp/create_XXXXXX
   register: mktemp_output
@@ -37,8 +28,3 @@
 - name: Debug
   debug:
     msg: "{{ result.stdout.splitlines() }}"
-
-- name: Check for script failure
-  fail:
-    msg: "The script encountered an error: {{ result.stdout }}"
-  when: result.rc != 0 or 'exit 1' in result.stdout

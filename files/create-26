@@ -25,7 +25,7 @@ LOG_DIR="/etc/httpd/logs/vhosts/$USER_ACCOUNT"
 CURRENT_DATE=$(date +"%Y-%m-%d")
 
 # 디버깅용 출력
-echo "=== 입력 변수 확인 ==="
+echo "=== ✅ 입력 변수 확인 ==="
 echo "USER_ACCOUNT: $USER_ACCOUNT"
 echo "USER_PASSWORD: $USER_PASSWORD"
 echo "DB_NAME: $DB_NAME"
@@ -43,10 +43,10 @@ echo "===================="
 echo "MySQL 접속 확인 중..."
 mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
 if [ $? -ne 0 ]; then
-    echo "MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+    echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
     exit 1
 else
-    echo "MySQL 로그인에 성공했습니다."
+    echo "✅ MySQL 로그인에 성공했습니다."
 fi
 
 # 임시파일 생성 (고유한 이름으로)
@@ -58,9 +58,9 @@ db_temp=$(mktemp /tmp/db.create.conf_tempfile.XXXXXX)
 /usr/sbin/useradd -m -s /bin/bash -d $HOME_DIR/$USER_ACCOUNT -g www $USER_ACCOUNT
 echo "$USER_PASSWORD" | passwd --stdin $USER_ACCOUNT  # 패스워드 설정
 if [ $? -eq 0 ]; then
-    echo "사용자 $USER_ACCOUNT 계정 생성 및 비밀번호 설정 성공."
+    echo "✅ 사용자 $USER_ACCOUNT 계정 생성 및 비밀번호 설정 성공."
 else
-    echo "사용자 $USER_ACCOUNT 계정 생성 실패."
+    echo "❌ 사용자 $USER_ACCOUNT 계정 생성 실패."
     exit 1
 fi
 
@@ -162,22 +162,22 @@ cat $cband_temp >> $CBAND_CONF_NAME
 # MySQL 쿼리 실행
 mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
 if [ $? -eq 0 ]; then
-    echo "MySQL DB 및 사용자 생성 성공."
+    echo "✅ MySQL DB 및 사용자 생성 성공."
 else
-    echo "MySQL DB 및 사용자 생성 실패."
+    echo "❌ MySQL DB 및 사용자 생성 실패."
     exit 1
 fi
 
 # Apache 설정 테스트 및 적용
 $BIN -t
 if [ $? -eq 0 ]; then
-    echo "Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
+    echo "✅ Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
     # $BIN -k restart
 else
-    echo "Apache 설정에 오류가 있습니다."
+    echo "❌ Apache 설정에 오류가 있습니다."
     exit 1
 fi
 
 # 임시 파일 삭제
 rm -rf $vhost_temp $cband_temp $db_temp
-echo "임시 파일 삭제 완료. 스크립트가 종료되었습니다."
+echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."

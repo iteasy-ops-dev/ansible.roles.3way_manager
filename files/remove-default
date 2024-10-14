@@ -69,10 +69,10 @@ fi
 echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
 {
     echo "DROP DATABASE \`$DB_NAME\`;"
-    echo "DROP USER '$3'@'%';"
-    echo "DROP USER '$3'@'localhost';"
+    echo "DELETE FROM mysql.user WHERE User="$DB_USER""
     echo "FLUSH PRIVILEGES;"
 } >> "$db_temp"
+
 # MySQL 쿼리 실행
 mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
 if [ $? -eq 0 ]; then

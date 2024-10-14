@@ -151,9 +151,9 @@ cat $cband_temp >> $CBAND_CONF_NAME
 {
     echo "CREATE DATABASE \`$DB_NAME\`;"
     echo "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'localhost';"
     echo "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'%';"
+    echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'localhost';"
+    echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'%';"
     echo "FLUSH PRIVILEGES;"
 } >> "$db_temp"
 

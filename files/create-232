@@ -169,31 +169,16 @@ cat $cband_temp >> $CBAND_CONF_NAME
 # fi
 
 # MySQL DB 및 사용자 생성
-# {
-#     echo "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`;"
-#     echo "SELECT 'Dropping user $DB_USER if exists';"
-#     echo "DELETE FROM mysql.user WHERE user = '$DB_USER' AND host = '%';"
-#     echo "DELETE FROM mysql.user WHERE user = '$DB_USER' AND host = 'localhost';"
-#     echo "FLUSH PRIVILEGES;"
-#     echo "CREATE USER $DB_USER@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
-#     echo "CREATE USER $DB_USER@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
-#     echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO $DB_USER@'%';"
-#     echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO $DB_USER@'localhost';"
-#     echo "FLUSH PRIVILEGES;"
-# } >> "$db_temp"
-
-# MySQL DB 및 사용자 생성
 {
     echo "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`;"
     echo "SELECT 'Dropping user $DB_USER if exists';"
     echo "DELETE FROM mysql.user WHERE user = '$DB_USER' AND host = '%';"
     echo "DELETE FROM mysql.user WHERE user = '$DB_USER' AND host = 'localhost';"
-    echo "FLUSH PRIVILEGES;"  # Make sure the privileges table is updated after deleting users.
-    echo "SELECT 'Creating user $DB_USER';"
-    echo "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'%';"
-    echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'localhost';"
+    echo "FLUSH PRIVILEGES;"
+    echo "CREATE USER $DB_USER@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "CREATE USER $DB_USER@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO $DB_USER@'%';"
+    echo "GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO $DB_USER@'localhost';"
     echo "FLUSH PRIVILEGES;"
 } >> "$db_temp"
 

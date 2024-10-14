@@ -65,21 +65,6 @@ else
     echo "$USER_ACCOUNT 계정 삭제에 실패했습니다."
 fi
 
-# 데이터베이스 및 DB 사용자 삭제
-# echo "데이터베이스 및 DB 사용자 삭제 중..."
-# {
-#     echo "DROP DATABASE IF EXISTS $DB_NAME;"
-#     echo "DROP USER IF EXISTS '$DB_USER'@'%';"
-#     echo "DROP USER IF EXISTS '$DB_USER'@'localhost';"
-# } >> "$db_temp"
-
-# mysql -u"$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
-# if [ $? -eq 0 ]; then
-#     echo "$DB_NAME 데이터베이스 및 $DB_USER DB 사용자 삭제에 성공했습니다."
-# else
-#     echo "데이터베이스 삭제에 실패했습니다."
-# fi
-
 echo "데이터베이스 및 DB 사용자 삭제 중..."
 {
     echo "DROP DATABASE IF EXISTS \`$DB_NAME\`;"

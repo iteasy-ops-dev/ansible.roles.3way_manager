@@ -68,10 +68,9 @@ fi
 
 echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
 {
-    echo "DROP DATABASE IF EXISTS \`$DB_NAME\`;"
-    echo "SELECT 'Dropping user $DB_USER if exists';"
-    echo "DROP USER IF EXISTS '$3'@'%';"
-    echo "DROP USER IF EXISTS '$3'@'localhost';"
+    echo "DROP DATABASE '$DB_NAME';"
+    echo "DROP USER '$3'@'%';"
+    echo "DROP USER '$3'@'localhost';"
     echo "FLUSH PRIVILEGES;"
 } >> "$db_temp"
 

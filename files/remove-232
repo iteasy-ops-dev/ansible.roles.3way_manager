@@ -13,6 +13,7 @@ DB_NAME="$2"
 DB_USER="$3"
 DB_ROOT_USER="$4"
 DB_ROOT_PASSWORD="$5"
+BIN="/usr/local/apache/bin/httpd"
 HOME_DIR="/home1"
 VHOST_CONF_NAME="/usr/local/apache/conf/vhosts.conf"
 CBAND_CONF_NAME="/usr/local/apache/conf/cband.conf"
@@ -37,7 +38,7 @@ db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 
 # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
 echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
-vhost_line=$(/usr/local/apache/bin/httpd -S | grep "$USER_ACCOUNT.web2002.kr" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
+vhost_line=$($BIN -S | grep "$USER_ACCOUNT.web2002.kr" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
 if [ -n "$vhost_line" ]; then
     sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_NAME"
     echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
@@ -101,10 +102,10 @@ fi
 
 # Apache 설정 테스트 및 적용
 echo "Apache 설정 파일 테스트 중..."
-/usr/local/apache/bin/httpd -t
+$BIN -t
 if [ $? -eq 0 ]; then
     echo "Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
-    # /usr/sbin/httpd -k graceful  # Apache 재시작
+    # $BIN -k graceful  # Apache 재시작
 else
     echo "Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
     exit 1

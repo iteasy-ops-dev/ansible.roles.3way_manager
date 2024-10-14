@@ -53,10 +53,43 @@ BSD
 프론트 개발
 
 
-### TODO: 
-- 쉘 스크립트 정리
-- 로컬 테스트
-- 배포 후 테스트
-- DB는 26번 서버만 활성화되어있으므로 교육 후 시작
-- 문법확인만 하고 아파치 재시작은 활성화 안되어있음.
-- 정리 후 사내 깃랩으로 전송
+1. [Start] → 
+2. [Input Variables] → 
+   - 수집된 사용자, DB 정보 출력
+
+3. [MySQL Connection Check] → 
+   - "MySQL 로그인 시도"
+   - [Decision: 성공/실패]
+     - 실패 시: [Display Error: "MySQL 로그인 실패"] → [End]
+     - 성공 시: [Proceed]
+
+4. [User Account Creation] →
+   - 사용자 계정 생성 및 비밀번호 설정
+   - [Decision: 성공/실패]
+     - 실패 시: [Display Error: "사용자 계정 생성 실패"] → [End]
+     - 성공 시: [Proceed]
+
+5. [Directory Setup] → 
+   - 홈 디렉토리 생성, 권한 설정, 로그 디렉토리 생성, 인덱스 파일 추가
+
+6. [Virtual Host & CBand Config] → 
+   - 임시파일 생성 및 설정 추가
+   - VHost 및 CBand 설정 파일 백업 및 추가
+
+7. [Database Setup] → 
+   - MySQL 쿼리로 DB 및 사용자 생성
+   - [Decision: 성공/실패]
+     - 실패 시: [Display Error: "DB 생성 실패"] → [End]
+     - 성공 시: [Proceed]
+
+8. [Apache Configuration Test] → 
+   - Apache 설정 테스트 수행
+   - [Decision: 성공/실패]
+     - 실패 시: [Display Error: "Apache 설정 오류"] → [End]
+     - 성공 시: [Apache Restart]
+
+9. [Cleanup] → 
+   - 임시 파일 삭제
+
+10. [End] → 
+   - "✅ 스크립트 완료"

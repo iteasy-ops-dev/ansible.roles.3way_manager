@@ -33,6 +33,16 @@ echo "LOG_DIR: $LOG_DIR"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
 
+# MySQL 접속 확인
+echo "MySQL 접속 확인 중..."
+mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+if [ $? -ne 0 ]; then
+    echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+    exit 1
+else
+    echo "✅ MySQL 로그인에 성공했습니다."
+fi
+
 # 임시파일 생성
 db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 

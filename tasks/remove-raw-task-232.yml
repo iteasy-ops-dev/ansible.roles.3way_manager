@@ -33,3 +33,8 @@
 - name: Debug
   debug:
     msg: "{{ result.stdout.splitlines() }}"
+    
+- name: Check for script failure
+  fail:
+    msg: "The script encountered an error: {{ result.stdout }}"
+  when: result.rc != 0 or 'exit 1' in result.stdout

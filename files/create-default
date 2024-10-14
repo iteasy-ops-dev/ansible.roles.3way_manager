@@ -170,7 +170,7 @@ fi
 $BIN -t
 if [ $? -eq 0 ]; then
     echo "✅ Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
-    # $BIN -k restart
+    $BIN -k graceful
 else
     echo "❌ Apache 설정에 오류가 있습니다."
     exit 1

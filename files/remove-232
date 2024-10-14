@@ -68,7 +68,7 @@ fi
 
 echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
 {
-    echo "DROP DATABASE '$DB_NAME';"
+    echo "DROP DATABASE \'$DB_NAME\';"
     echo "DROP USER '$3'@'%';"
     echo "DROP USER '$3'@'localhost';"
     echo "FLUSH PRIVILEGES;"

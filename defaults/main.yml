@@ -8,9 +8,9 @@ db_name: ""
 db_user: ""
 db_password: ""
 
+cband_limit: ""
+
 mysql_root_user: ""
 mysql_root_password: ""
 
-
-
-setup: true
+setup: ""

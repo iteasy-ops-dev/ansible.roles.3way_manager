@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# 입력 변수
+# $1: 사용자 계정 이름
+# $2: cband(GB)
+
+# 변수 선언
+USER_ACCOUNT="$1"
+CBAND_LIMIT="$2"
+CBAND_CONF_NAME="/etc/httpd/conf.d/cband.conf"
+BIN="/usr/sbin/httpd"
+CURRENT_DATE=$(date +"%Y-%m-%d")
+
+# 임시파일 생성 (고유한 이름으로)
+cband_temp=$(mktemp /tmp/cband.conf_tempfile.XXXXXX)
+if [ ! -f "$cband_temp" ]; then
+    echo "❌ 임시 파일을 생성할 수 없습니다."
+    exit 1
+fi
+
+# 디버깅용 출력
+echo "=== ✅ 입력 변수 확인 ==="
+echo "USER_ACCOUNT: $USER_ACCOUNT"
+echo "CBAND_LIMIT: $CBAND_LIMIT"
+echo "CBAND_CONF_NAME: $CBAND_CONF_NAME"
+echo "CURRENT_DATE: $CURRENT_DATE"
+echo "===================="
+
+# 입력값 확인
+if [ -z "$USER_ACCOUNT" ] || [ -z "$CBAND_LIMIT" ]; then
+    echo "❌ 사용자 계정 이름과 대역폭 제한을 입력해야 합니다."
+    exit 1
+fi
+
+# cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
+echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
+if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME"; then
+    sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_NAME"
+    echo "✅ CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
+else
+    echo "❗️ CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."
+fi
+
+# CBand 설정
+{
+    echo ""
+    echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
+    echo "<IfModule cband_module>"
+    echo "  <CBandUser cband$USER_ACCOUNT>"
+    echo "     CBandUserLimit $CBAND_LIMIT Gi"
+    echo "     CBandUserPeriod 1D"
+    echo "     <Location /throttle-me>"
+    echo "       SetHandler cband-status-me"
+    echo "       AuthName 'cband-status-me'"
+    echo "       AuthType Basic"
+    echo "       AuthUserFile /usr/local/apache/conf/.$USER_ACCOUNT"
+    echo "       require user $USER_ACCOUNT"
+    echo "     </Location>"
+    echo "  </CBandUser>"
+    echo "</IfModule>"
+    echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
+} >> $cband_temp
+
+# CBand 파일 백업 및 추가
+cp -arp $CBAND_CONF_NAME $CBAND_CONF_NAME.old
+# cp -p "$CBAND_CONF_NAME" "${CBAND_CONF_NAME}.$(date +"%Y%m%d%H%M%S").bak"
+cat $cband_temp >> $CBAND_CONF_NAME
+
+# Apache 설정 테스트 및 적용
+$BIN -t
+if [ $? -eq 0 ]; then
+    echo "✅ Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
+    $BIN -k graceful
+else
+    echo "❌ Apache 설정에 오류가 있습니다."
+    exit 1
+fi
+
+# 임시 파일 삭제
+rm -rf $cband_temp
+echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."

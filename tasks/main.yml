@@ -42,7 +42,7 @@
 # setup
 - name: Include default setup tasks
   ansible.builtin.include_tasks: "{{ setup }}-raw-task-default.yml"
-  when: last_octet != "26" and last_octet != "232"
+  when: last_octet != "26" and last_octet != "232" and last_octet != "35"
 
 - name: Include 26 setup tasks
   ansible.builtin.include_tasks: "{{ setup }}-raw-task-26.yml"

@@ -134,7 +134,7 @@ cat $vhost_temp >> $VHOST_CONF_NAME
     echo "        CBandUserPeriod 1D"
     echo "        <Location /throttle-me>"
     echo "            SetHandler cband-status-me"
-    echo "            AuthName 'cband-status-me'"
+    echo "            AuthName cband-status-me"
     echo "            AuthType Basic"
     echo "            AuthUserFile /usr/local/apache/conf/.$USER_ACCOUNT"
     echo "            require user $USER_ACCOUNT"

@@ -1,18 +1,26 @@
 ---
 # tasks file for iteasy.ansible.roles.3way_manager
-- name: Copy the shell script to remote server
-  copy:
-    src: update-cband-default           # 로컬에 있는 쉘 스크립트 경로
-    dest: /tmp/update-cband           # 원격 서버에 전송될 경로
-    mode: '0755'                              # 실행 권한 설정
+- name: Generate a unique filename using mktemp
+  raw: mktemp /tmp/remove_XXXXXX
+  register: mktemp_output
+
+- name: Set the unique filename
+  set_fact:
+    unique_filename: "{{ mktemp_output.stdout | trim }}"
+- name: Download Shell script
+  become_user: root
+  become: true
+  raw: "wget -O {{ unique_filename }} https://raw.githubusercontent.com/iteasy-ops-dev/ansible.roles.3way_manager/refs/heads/main/files/update-cband-default"
+  register: result
 
 - name: Excute
   become_user: root
   become: true
   register: result
   raw: |
-    /tmp/update-cband {{ user_id }} {{ cband_limit }}
-    rm -rf /tmp/update-cband
+    chmod 755 {{ unique_filename }}
+    {{ unique_filename }} {{ user_id }} {{ cband_limit }}
+    rm -rf {{ unique_filename }}
 
 - name: Debug
   debug:

@@ -19,7 +19,7 @@
   register: result
   raw: |
     chmod 755 {{ unique_filename }}
-    {{ unique_filename }} {{ user_id }} {{ db_name }} {{ db_user }} {{ mysql_root_user }} '{{ mysql_root_password }}'
+    {{ unique_filename }} {{ user_id }} {{ cband_limit }}
     rm -rf {{ unique_filename }}
 
 - name: Debug

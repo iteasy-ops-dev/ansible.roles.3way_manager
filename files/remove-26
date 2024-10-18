@@ -99,7 +99,7 @@ echo "✅ Apache 설정 파일 테스트 중..."
 $BIN -t
 if [ $? -eq 0 ]; then
     echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
-    # $BIN -k graceful  # Apache 재시작
+    $BIN -k graceful  # Apache 재시작
 else
     echo "❌ Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
     exit 1

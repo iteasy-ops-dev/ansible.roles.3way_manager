@@ -1,7 +1,7 @@
 ---
 # TODO: 
 # cband 변경: https://admin.ksidc.net/service/request_info/?mem_idx=40396&idx=230401
-# 
+# 유저 비번 변경 및 ip 추가: https://admin.ksidc.net/service/request_info/?mem_idx=40396&idx=230029
 
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Check Server OS version
@@ -46,7 +46,7 @@
 
 - name: Include 26 setup tasks
   ansible.builtin.include_tasks: "{{ setup }}-raw-task-26.yml"
-  when: (last_octet == "26") or (last_octet == "35")
+  when: (last_octet == "26") or (last_octet == "35") or (last_octet == "41")
 
 - name: Include 232 setup tasks
   ansible.builtin.include_tasks: "{{ setup }}-raw-task-232.yml"

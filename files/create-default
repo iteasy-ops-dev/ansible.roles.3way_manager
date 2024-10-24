@@ -23,6 +23,7 @@ VHOST_CONF_NAME="/usr/local/apache/conf/vhosts.conf"
 CBAND_CONF_NAME="/usr/local/apache/conf/cband.conf"
 LOG_DIR="/usr/local/apache/logs/vhosts/$USER_ACCOUNT"
 CURRENT_DATE=$(date +"%Y-%m-%d")
+MYSQL_BIN=$(which mysql)
 
 # 디버깅용 출력
 echo "=== ✅ 입력 변수 확인 ==="
@@ -37,12 +38,12 @@ echo "VHOST_CONF_NAME: $VHOST_CONF_NAME"
 echo "CBAND_CONF_NAME: $CBAND_CONF_NAME"
 echo "LOG_DIR: $LOG_DIR"
 echo "BIN: $BIN"
+echo "MYSQL_BIN: $MYSQL_BIN"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
 
 # MySQL 접속 확인
 echo "MySQL 접속 확인 중..."
-MYSQL_BIN="/usr/local/mysql/bin/mysql"
 $MYSQL_BIN -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
 # mysql 5.5 버전 이상
 # mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"

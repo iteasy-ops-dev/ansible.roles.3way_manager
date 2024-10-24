@@ -9,6 +9,8 @@
 # $6: DB root 사용자 이름
 # $7: DB root 사용자 비밀번호
 
+export PATH=$PATH:/usr/local/mysql/bin
+
 # 변수 선언
 USER_ACCOUNT="$1"
 USER_PASSWORD="$2"
@@ -45,10 +47,6 @@ echo "===================="
 # MySQL 접속 확인
 echo "MySQL 접속 확인 중..."
 $MYSQL_BIN -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
-# mysql 5.5 버전 이상
-# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
-# mysql 5버전
-# mysql -u "$DB_ROOT_USER" -p"'$DB_ROOT_PASSWORD'" -e "exit"
 if [ $? -ne 0 ]; then
     echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
     exit 1

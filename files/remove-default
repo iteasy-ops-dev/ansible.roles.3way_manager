@@ -7,6 +7,8 @@
 # $4: DB root 사용자 이름
 # $5: DB root 사용자 비밀번호
 
+export PATH=$PATH:/usr/local/mysql/bin
+
 # 변수 선언
 USER_ACCOUNT="$1"
 DB_NAME="$2"
@@ -19,6 +21,7 @@ VHOST_CONF_NAME="/usr/local/apache/conf/vhosts.conf"
 CBAND_CONF_NAME="/usr/local/apache/conf/cband.conf"
 LOG_DIR="/usr/local/apache/logs/vhosts/$USER_ACCOUNT"
 CURRENT_DATE=$(date +"%Y-%m-%d")
+MYSQL_BIN=$(which mysql)
 
 # 디버깅용 출력
 echo "=== ✅ 입력 변수 확인 ==="
@@ -31,15 +34,13 @@ echo "VHOST_CONF_NAME: $VHOST_CONF_NAME"
 echo "CBAND_CONF_NAME: $CBAND_CONF_NAME"
 echo "LOG_DIR: $LOG_DIR"
 echo "BIN: $BIN"
+echo "MYSQL_BIN: $MYSQL_BIN"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
 
 # MySQL 접속 확인
 echo "MySQL 접속 확인 중..."
-# mysql 5.5 버전 이상
-mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
-# mysql 5버전
-# mysql -u "$DB_ROOT_USER" -p"'$DB_ROOT_PASSWORD'" -e "exit" 
+$MYSQL_BIN -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
 if [ $? -ne 0 ]; then
     echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
     exit 1

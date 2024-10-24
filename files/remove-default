@@ -7,6 +7,7 @@
 # $4: DB root 사용자 이름
 # $5: DB root 사용자 비밀번호
 
+# 24 서버 path mysql 설정
 export PATH=$PATH:/usr/local/mysql/bin
 
 # 변수 선언

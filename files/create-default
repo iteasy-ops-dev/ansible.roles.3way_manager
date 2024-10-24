@@ -42,8 +42,10 @@ echo "===================="
 
 # MySQL 접속 확인
 echo "MySQL 접속 확인 중..."
+MYSQL_BIN="/usr/local/mysql/bin/mysql"
+$MYSQL_BIN -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
 # mysql 5.5 버전 이상
-mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
 # mysql 5버전
 # mysql -u "$DB_ROOT_USER" -p"'$DB_ROOT_PASSWORD'" -e "exit"
 if [ $? -ne 0 ]; then

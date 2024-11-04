@@ -20,7 +20,7 @@ DB_USER="$4"
 DB_USER_PASSWORD="$5"
 DB_ROOT_USER="$6"
 DB_ROOT_PASSWORD="$7"
-BIN="/usr/local/apache/bin/httpd"
+BIN="/usr/local/apache/bin/apachectl"
 HOME_DIR="/home"
 VHOST_CONF_NAME="/usr/local/apache/conf/vhosts.conf"
 CBAND_CONF_NAME="/usr/local/apache/conf/cband.conf"
@@ -176,7 +176,7 @@ fi
 $BIN -t
 if [ $? -eq 0 ]; then
     echo "✅ Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
-    $BIN -k graceful
+    $BIN graceful
 else
     echo "❌ Apache 설정에 오류가 있습니다."
     exit 1

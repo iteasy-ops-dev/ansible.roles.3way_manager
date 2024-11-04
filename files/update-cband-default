@@ -8,7 +8,7 @@
 USER_ACCOUNT="$1"
 CBAND_LIMIT="$2"
 CBAND_CONF_NAME="/usr/local/apache/conf/cband.conf"
-BIN="/usr/local/apache/bin/httpd"
+BIN="/usr/local/apache/bin/apachectl"
 CURRENT_DATE=$(date +"%Y-%m-%d")
 
 # 임시파일 생성 (고유한 이름으로)
@@ -74,7 +74,7 @@ cat $cband_temp >> $CBAND_CONF_NAME
 $BIN -t
 if [ $? -eq 0 ]; then
     echo "✅ Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
-    $BIN -k graceful
+    $BIN graceful
 else
     echo "❌ Apache 설정에 오류가 있습니다."
     exit 1

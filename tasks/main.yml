@@ -20,7 +20,7 @@
   ansible.builtin.include_vars: "vars_{{ last_octet }}.yml"
 
 - name: Include OS-specific tasks.
-  ansible.builtin.include_vars: "{{ setup }}-raw-task.yml"
+  ansible.builtin.include_tasks: "{{ setup }}-raw-task.yml"
 
 # setup
 # - name: Include 232 setup tasks

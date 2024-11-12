@@ -60,7 +60,7 @@ echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
 #     echo "❗️ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
 # fi
 vhost_lines=$($BIN -S | grep "$DOMAIN" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g')
-if [ -n "$vhost_line" ]; then
+if [ -n "$vhost_lines" ]; then
     for vhost_line in $vhost_lines; do
         # 파일 경로 추출
         path=$(echo "$vhost_line" | awk -F':' '{print $1}')

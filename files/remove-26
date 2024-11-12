@@ -104,7 +104,7 @@ fi
 
 echo "${closest_smaller_in_vhost_head} < ${vhost_line} < ${closest_larger_in_vhost_tail}"
 sed -n "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}p" $VHOST_CONF_NAME
-# sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
+sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #                                                           #
 #                     vhost 주석 처리                         #
@@ -138,7 +138,7 @@ if [ $closest_larger_in_cband_tail -eq -1 ]; then
 fi
 echo "${closest_smaller_in_cband_head} < ${cband_line} < ${closest_larger_in_cband_tail}"
 sed -n "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}p" $CBAND_CONF_NAME
-# sed -i "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
+sed -i "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #                                                           #
 #                     cband 주석 처리                         #
@@ -174,7 +174,7 @@ fi
 
 echo "${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
 sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
-# sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
+sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #                                                           #
 #                     ssl 주석 처리                           #

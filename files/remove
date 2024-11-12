@@ -51,7 +51,7 @@ echo "===================="
 # db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 
 # # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
-# echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
+echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
 # vhost_line=$($BIN -S | grep "$USER_ACCOUNT.web2002.kr" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
 # if [ -n "$vhost_line" ]; then
 #     sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_NAME"
@@ -59,6 +59,27 @@ echo "===================="
 # else
 #     echo "❗️ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
 # fi
+vhost_lines=$($BIN -S | grep "$DOMAIN" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g')
+if [ -n "$vhost_line" ]; then
+    for vhost_line in $vhost_lines; do
+        # 파일 경로 추출
+        path=$(echo "$vhost_line" | awk -F':' '{print $1}')
+        # 라인 번호 추출
+        line=$(echo "$vhost_line" | awk -F':' '{print $2}')
+        
+        if [ -f "$path" ]; then
+            # 해당 라인부터 VirtualHost 종료까지 주석 처리
+            # sed -i.bak "${line},/<\/VirtualHost>/ s/^/#/" "$path"
+            echo "🔔 path: ${path}"
+            echo "🔔 line: ${line}"
+            echo "✅ $path 파일에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
+        else
+            echo "❗️ 파일을 찾을 수 없습니다: $path"
+        fi
+    done
+else
+    echo "❗️ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
+fi
 
 # # cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
 # echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."

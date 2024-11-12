@@ -11,20 +11,7 @@
   become: true
   register: result
   raw: |
-    set -e && \
-    /tmp/create \
-    --bin={{ bin }} \
-    --home_dir={{ home_dir }} \
-    --vhost_path={{ vhost_path }} \
-    --cband_path={{ cband_path }} \
-    --log_dir={{ log_dir }}{{ user_id }} \
-    --account={{ user_id }} \
-    --user_pass'{{ user_pass }}' \
-    --db_name={{ db_name }} \
-    --db_user={{ db_user }} \
-    --db_passwd='{{ db_password }}' \
-    --db_admin{{ mysql_root_user }} \
-    --db_admin_passwd='{{ mysql_root_password }}' && \
+    /tmp/create {{ user_id }} {{ user_pass }} {{ db_name }} {{ db_user }} '{{ db_password }}' {{ mysql_root_user }} '{{ mysql_root_password }}'
     rm -rf /tmp/create
 
 - name: Debug

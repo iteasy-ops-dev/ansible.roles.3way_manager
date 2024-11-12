@@ -22,7 +22,7 @@
     --domain={{ domain }} \
     --db_name={{ db_name }} \
     --db_user={{ db_user }} \
-    --db_admin{{ mysql_root_user }} \
+    --db_admin={{ mysql_root_user }} \
     --db_admin_passwd='{{ mysql_root_password }}' && \
     rm -rf /tmp/remove
 

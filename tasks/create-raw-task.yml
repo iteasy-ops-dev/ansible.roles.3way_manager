@@ -19,11 +19,11 @@
     --cband_path={{ cband_path }} \
     --log_dir={{ log_dir }}{{ user_id }} \
     --account={{ user_id }} \
-    --user_pass'{{ user_pass }}' \
+    --user_pass='{{ user_pass }}' \
     --db_name={{ db_name }} \
     --db_user={{ db_user }} \
     --db_passwd='{{ db_password }}' \
-    --db_admin{{ mysql_root_user }} \
+    --db_admin={{ mysql_root_user }} \
     --db_admin_passwd='{{ mysql_root_password }}' && \
     rm -rf /tmp/create
 

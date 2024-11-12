@@ -86,26 +86,23 @@ vhost_head=($(grep -n "\<VirtualHost" "$VHOST_CONF_NAME" | awk '{ print $1 }' | 
 
 vhost_tail=($(grep -n "</VirtualHost>" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
-vhost_documentRoot_line=$(grep -n "DocumentRoot /home/$USER_ACCOUNT/www" "$VHOST_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+vhost_line=$(grep -n "DocumentRoot /home/$USER_ACCOUNT/www" "$VHOST_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
 
-closest_smaller_in_vhost_head=$(find_closest_smaller $vhost_documentRoot_line "${vhost_head[@]}")
+closest_smaller_in_vhost_head=$(find_closest_smaller $vhost_line "${vhost_head[@]}")
 
-closest_larger_in_vhost_tail=$(find_closest_larger $vhost_documentRoot_line "${vhost_tail[@]}")
+closest_larger_in_vhost_tail=$(find_closest_larger $vhost_line "${vhost_tail[@]}")
 
 if [ $closest_smaller_in_vhost_head -eq -1 ]; then
   echo "배열 1에서 입력값보다 작은 수가 없습니다."
   exit 1
-else
-  echo "배열 1에서 입력값보다 작은 수 중 가장 큰 수: $closest_smaller_in_vhost_head"
 fi
 
 if [ $closest_larger_in_vhost_tail -eq -1 ]; then
   echo "배열 2에서 입력값보다 큰 수가 없습니다."
   exit 1
-else
-  echo "배열 2에서 입력값보다 큰 수 중 가장 작은 수: $closest_larger_in_vhost_tail"
 fi
 
+echo "${closest_smaller_in_vhost_head} < ${vhost_line} < ${closest_larger_in_vhost_tail}"
 sed -n "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}p" $VHOST_CONF_NAME
 # sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -133,17 +130,13 @@ closest_larger_in_cband_tail=$(find_closest_larger $cband_line "${cband_tail[@]}
 if [ $closest_smaller_in_cband_head -eq -1 ]; then
   echo "배열 1에서 입력값보다 작은 수가 없습니다."
   exit 1
-else
-  echo "배열 1에서 입력값보다 작은 수 중 가장 큰 수: $closest_smaller_in_cband_head"
 fi
 
 if [ $closest_larger_in_cband_tail -eq -1 ]; then
   echo "배열 2에서 입력값보다 큰 수가 없습니다."
   exit 1
-else
-  echo "배열 2에서 입력값보다 큰 수 중 가장 작은 수: $closest_larger_in_cband_tail"
 fi
-
+echo "${closest_smaller_in_cband_head} < ${cband_line} < ${closest_larger_in_cband_tail}"
 sed -n "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}p" $CBAND_CONF_NAME
 # sed -i "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -172,17 +165,14 @@ closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${cband_tail[@]}")
 if [ $closest_smaller_in_ssl_head -eq -1 ]; then
   echo "배열 1에서 입력값보다 작은 수가 없습니다."
   exit 1
-else
-  echo "배열 1에서 입력값보다 작은 수 중 가장 큰 수: $closest_smaller_in_ssl_head"
 fi
 
 if [ $closest_larger_in_ssl_tail -eq -1 ]; then
   echo "배열 2에서 입력값보다 큰 수가 없습니다."
   exit 1
-else
-  echo "배열 2에서 입력값보다 큰 수 중 가장 작은 수: $closest_larger_in_ssl_tail"
 fi
 
+echo "${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
 sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
 # sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 

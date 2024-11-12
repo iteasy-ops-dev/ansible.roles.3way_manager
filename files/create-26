@@ -184,8 +184,3 @@ fi
 # 임시 파일 삭제
 rm -rf $vhost_temp $cband_temp $db_temp
 echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."
-
-
-
-
-func 

@@ -76,6 +76,28 @@ find_closest_larger() {
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     DB 로그인 검사                           #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# MySQL 접속 확인
+echo "MySQL 접속 확인 중..."
+mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+if [ $? -ne 0 ]; then
+    echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+    exit 1
+else
+    echo "✅ MySQL 로그인에 성공했습니다."
+fi
+
+# 임시파일 생성
+db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     DB 로그인 검사                           #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #                                                           #
@@ -86,23 +108,23 @@ vhost_head=($(grep -n "\<VirtualHost" "$VHOST_CONF_NAME" | awk '{ print $1 }' | 
 
 vhost_tail=($(grep -n "</VirtualHost>" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
-vhost_line=$(grep -n "DocumentRoot /home/$USER_ACCOUNT/www" "$VHOST_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+vhost_line=$(grep -n "DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$VHOST_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
 
 closest_smaller_in_vhost_head=$(find_closest_smaller $vhost_line "${vhost_head[@]}")
 
 closest_larger_in_vhost_tail=$(find_closest_larger $vhost_line "${vhost_tail[@]}")
 
 if [ $closest_smaller_in_vhost_head -eq -1 ]; then
-  echo "배열 1에서 입력값보다 작은 수가 없습니다."
+  echo "❌ vhost 주석 처리: vhost_head에서 입력값보다 작은 수가 없습니다."
   exit 1
 fi
 
 if [ $closest_larger_in_vhost_tail -eq -1 ]; then
-  echo "배열 2에서 입력값보다 큰 수가 없습니다."
+  echo "❌ vhost 주석 처리: vhost_tail에서 입력값보다 큰 수가 없습니다."
   exit 1
 fi
 
-echo "${closest_smaller_in_vhost_head} < ${vhost_line} < ${closest_larger_in_vhost_tail}"
+echo "✅ vhost 주석 처리: ${closest_smaller_in_vhost_head} < ${vhost_line} < ${closest_larger_in_vhost_tail}"
 sed -n "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}p" $VHOST_CONF_NAME
 sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -110,7 +132,6 @@ sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /"
 #                     vhost 주석 처리                         #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #                                                           #
@@ -128,15 +149,15 @@ closest_smaller_in_cband_head=$(find_closest_smaller $cband_line "${cband_head[@
 closest_larger_in_cband_tail=$(find_closest_larger $cband_line "${cband_tail[@]}")
 
 if [ $closest_smaller_in_cband_head -eq -1 ]; then
-  echo "배열 1에서 입력값보다 작은 수가 없습니다."
+  echo "❌ Cband 주석 처리: cband_head에서 입력값보다 작은 수가 없습니다."
   exit 1
 fi
 
 if [ $closest_larger_in_cband_tail -eq -1 ]; then
-  echo "배열 2에서 입력값보다 큰 수가 없습니다."
+  echo "❌ Cband 주석 처리: cband_tail에서 입력값보다 큰 수가 없습니다."
   exit 1
 fi
-echo "${closest_smaller_in_cband_head} < ${cband_line} < ${closest_larger_in_cband_tail}"
+echo "✅ Cband 주석 처리: ${closest_smaller_in_cband_head} < ${cband_line} < ${closest_larger_in_cband_tail}"
 sed -n "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}p" $CBAND_CONF_NAME
 sed -i "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -144,7 +165,6 @@ sed -i "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /"
 #                     cband 주석 처리                         #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #                                                           #
@@ -155,24 +175,30 @@ ssl_head=($(grep -n "\<VirtualHost" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut 
 
 ssl_tail=($(grep -n "</VirtualHost>" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
-ssl_line=$(grep -n "DocumentRoot /home/$USER_ACCOUNT/www" "$SSL_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+# DocumentRoot 라인을 찾는 부분, 만약 존재하지 않으면 아래 로직을 건너뜀
+ssl_line=$(grep -n "DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$SSL_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+
+# ssl_line이 비어있거나 존재하지 않으면 해당 로직을 건너뜀
+if [ -z "$ssl_line" ]; then
+  echo "❗️ ssl 주석 처리: DocumentRoot가 $SSL_CONF_NAME 에 존재하지 않습니다. 주석 처리를 건너뜁니다."
+  exit 0  # 또는 exit 1을 통해 다른 종료 코드도 가능
+fi
 
 closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${ssl_head[@]}")
-
 closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${ssl_tail[@]}")
 
 # 결과 출력
 if [ $closest_smaller_in_ssl_head -eq -1 ]; then
-  echo "배열 1에서 입력값보다 작은 수가 없습니다."
+  echo "❌ ssl 주석 처리: ssl_head에서 입력값보다 작은 수가 없습니다."
   exit 1
 fi
 
 if [ $closest_larger_in_ssl_tail -eq -1 ]; then
-  echo "배열 2에서 입력값보다 큰 수가 없습니다."
+  echo "❌ ssl 주석 처리: ssl_tail에서 입력값보다 큰 수가 없습니다."
   exit 1
 fi
 
-echo "${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
+echo "✅ ssl 주석 처리: ${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
 sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
 sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -181,18 +207,10 @@ sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$S
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-# # MySQL 접속 확인
-# echo "MySQL 접속 확인 중..."
-# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
-# if [ $? -ne 0 ]; then
-#     echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
-#     exit 1
-# else
-#     echo "✅ MySQL 로그인에 성공했습니다."
-# fi
 
-# # 임시파일 생성
-# db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+
+
+
 
 # # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
 # echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."

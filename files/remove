@@ -8,7 +8,6 @@ for arg in "$@"; do
     --cband_path=*) CBAND_CONF_NAME="${arg#*=}" ;; 
     --log_dir=*) LOG_DIR="${arg#*=}" ;; 
     --account=*) USER_ACCOUNT="${arg#*=}" ;; 
-    --domain=*) DOMAIN="${arg#*=}" ;; 
     --db_name=*) DB_NAME="${arg#*=}" ;; 
     --db_user=*) DB_USER="${arg#*=}" ;; 
     --db_admin=*) DB_ROOT_USER="${arg#*=}" ;; 
@@ -25,7 +24,6 @@ CURRENT_DATE=$(date +"%Y-%m-%d")
 # 디버깅용 출력
 echo "=== ✅ 입력 변수 확인 ==="
 echo "USER_ACCOUNT: $USER_ACCOUNT"
-echo "DOMAIN: $DOMAIN"
 echo "DB_NAME: $DB_NAME"
 echo "DB_USER: $DB_USER"
 echo "DB_ROOT_USER: $DB_ROOT_USER"
@@ -52,7 +50,7 @@ db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 
 # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
 echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
-vhost_lines=$($BIN -S | grep "$DOMAIN" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g')
+vhost_lines=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g')
 if [ -n "$vhost_lines" ]; then
     for vhost_line in $vhost_lines; do
         # 파일 경로 추출

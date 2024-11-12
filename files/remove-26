@@ -17,6 +17,7 @@ BIN="apachectl"
 HOME_DIR="/home"
 VHOST_CONF_NAME="/etc/httpd/conf.d/vhosts.conf"
 CBAND_CONF_NAME="/etc/httpd/conf.d/cband.conf"
+SSL_CONF_NAME="/etc/httpd/conf.d/ssl.conf"
 LOG_DIR="/etc/httpd/logs/vhosts/$USER_ACCOUNT"
 CURRENT_DATE=$(date +"%Y-%m-%d")
 
@@ -29,101 +30,257 @@ echo "DB_ROOT_USER: $DB_ROOT_USER"
 echo "DB_ROOT_PASSWORD: $DB_ROOT_PASSWORD"
 echo "VHOST_CONF_NAME: $VHOST_CONF_NAME"
 echo "CBAND_CONF_NAME: $CBAND_CONF_NAME"
+echo "SSL_CONF_NAME: $SSL_CONF_NAME"
 echo "LOG_DIR: $LOG_DIR"
 echo "BIN: $BIN"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
 
-# MySQL 접속 확인
-echo "MySQL 접속 확인 중..."
-mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
-if [ $? -ne 0 ]; then
-    echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
-    exit 1
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     함 수                                  #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# 배열에서 입력값보다 작은 숫자 중 가장 큰 수를 찾는 함수
+find_closest_smaller() {
+  local number=$1
+  shift
+  local closest=-1
+
+  for num in "$@"; do
+    if [ $num -lt $number ] && { [ $closest -eq -1 ] || [ $num -gt $closest ]; }; then
+      closest=$num
+    fi
+  done
+
+  echo $closest
+}
+
+# 배열에서 입력값보다 큰 숫자 중 가장 작은 수를 찾는 함수
+find_closest_larger() {
+  local number=$1
+  shift
+  local closest=-1
+
+  for num in "$@"; do
+    if [ $num -gt $number ] && { [ $closest -eq -1 ] || [ $num -lt $closest ]; }; then
+      closest=$num
+    fi
+  done
+
+  echo $closest
+}
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     함 수                                  #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     vhost 주석 처리                         #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+vhost_head=($(grep -n "\<VirtualHost" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+vhost_tail=($(grep -n "</VirtualHost>" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+vhost_documentRoot_line=$(grep -n "DocumentRoot /home/$USER_ACCOUNT/www" "$VHOST_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+
+closest_smaller_in_vhost_head=$(find_closest_smaller $vhost_documentRoot_line "${vhost_head[@]}")
+
+closest_larger_in_vhost_tail=$(find_closest_larger $vhost_documentRoot_line "${vhost_tail[@]}")
+
+if [ $closest_smaller_in_vhost_head -eq -1 ]; then
+  echo "배열 1에서 입력값보다 작은 수가 없습니다."
+  exit 1
 else
-    echo "✅ MySQL 로그인에 성공했습니다."
+  echo "배열 1에서 입력값보다 작은 수 중 가장 큰 수: $closest_smaller_in_vhost_head"
 fi
 
-# 임시파일 생성
-db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
-
-# vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
-echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
-vhost_lines=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g')
-# vhost_line=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
-if [ -n "$vhost_lines" ]; then
-    # sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_NAME"
-    # echo "✅ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
-    for vhost_line in $vhost_lines; do
-        # 파일 경로 추출
-        path=$(echo "$vhost_line" | awk -F':' '{print $1}')
-        # 라인 번호 추출
-        line=$(echo "$vhost_line" | awk -F':' '{print $2}')
-        echo "✅ 파일 경로: $vhost_line"
-        if [ -f "$path" ]; then
-            # 해당 라인부터 VirtualHost 종료까지 주석 처리
-            sed -i.bak "${line},/<\/VirtualHost>/ s/^/#/" "$path"
-            echo "✅ $path 파일에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
-        else
-            echo "❗️ 파일을 찾을 수 없습니다: $path"
-            exit 1
-        fi
-    done
+if [ $closest_larger_in_vhost_tail -eq -1 ]; then
+  echo "배열 2에서 입력값보다 큰 수가 없습니다."
+  exit 1
 else
-    echo "❗️ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
-    exit 1
+  echo "배열 2에서 입력값보다 큰 수 중 가장 작은 수: $closest_larger_in_vhost_tail"
 fi
 
-# cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
-echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
-if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME"; then
-    sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_NAME"
-    echo "✅ CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
+sed -n "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}p" $VHOST_CONF_NAME
+# sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     vhost 주석 처리                         #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     Cband 주석 처리                         #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+cband_head=($(grep -n "\<IfModule" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+cband_tail=($(grep -n "</IfModule>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+cband_line=$(grep -n "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+
+closest_smaller_in_cband_head=$(find_closest_smaller $cband_line "${cband_head[@]}")
+
+closest_larger_in_cband_tail=$(find_closest_larger $cband_line "${cband_tail[@]}")
+
+if [ $closest_smaller_in_cband_head -eq -1 ]; then
+  echo "배열 1에서 입력값보다 작은 수가 없습니다."
+  exit 1
 else
-    echo "❗️ CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."
-    exit 1
+  echo "배열 1에서 입력값보다 작은 수 중 가장 큰 수: $closest_smaller_in_cband_head"
 fi
 
-# 사용자 삭제 및 디렉토리 정리
-echo "$USER_ACCOUNT 사용자 및 관련 디렉토리 삭제 중..."
-/usr/sbin/userdel "$USER_ACCOUNT"
-rm -rf "$HOME_DIR/$USER_ACCOUNT"
-rm -rf "$LOG_DIR"
-if [ $? -eq 0 ]; then
-    echo "✅ $USER_ACCOUNT 계정 및 관련 디렉토리를 삭제했습니다."
+if [ $closest_larger_in_cband_tail -eq -1 ]; then
+  echo "배열 2에서 입력값보다 큰 수가 없습니다."
+  exit 1
 else
-    echo "❗️ $USER_ACCOUNT 계정 삭제에 실패했습니다."
-    exit 1
+  echo "배열 2에서 입력값보다 큰 수 중 가장 작은 수: $closest_larger_in_cband_tail"
 fi
 
-echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
-{
-    echo "DROP DATABASE IF EXISTS $2;"
-    echo "DROP USER IF EXISTS '$3'@'%';"
-    echo "DROP USER IF EXISTS '$3'@'localhost';"
-} >> $db_temp
+sed -n "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}p" $CBAND_CONF_NAME
+# sed -i "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     cband 주석 처리                         #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-# MySQL 쿼리 실행
-mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
-if [ $? -eq 0 ]; then
-    echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     ssl 주석 처리                           #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+ssl_head=($(grep -n "\<VirtualHost" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+ssl_tail=($(grep -n "</VirtualHost>" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+ssl_line=$(grep -n "DocumentRoot /home/$USER_ACCOUNT/www" "$SSL_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+
+closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${cband_head[@]}")
+
+closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${cband_tail[@]}")
+
+# 결과 출력
+if [ $closest_smaller_in_ssl_head -eq -1 ]; then
+  echo "배열 1에서 입력값보다 작은 수가 없습니다."
+  exit 1
 else
-    echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
-    exit 1
+  echo "배열 1에서 입력값보다 작은 수 중 가장 큰 수: $closest_smaller_in_ssl_head"
 fi
 
-
-# Apache 설정 테스트 및 적용
-echo "✅ Apache 설정 파일 테스트 중..."
-$BIN -t
-if [ $? -eq 0 ]; then
-    echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
-    $BIN graceful  # Apache 재시작
+if [ $closest_larger_in_ssl_tail -eq -1 ]; then
+  echo "배열 2에서 입력값보다 큰 수가 없습니다."
+  exit 1
 else
-    echo "❌ Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
-    exit 1
+  echo "배열 2에서 입력값보다 큰 수 중 가장 작은 수: $closest_larger_in_ssl_tail"
 fi
 
-# 임시 파일 삭제
-rm -rf "$db_temp"
-echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."
+sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
+# sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                     ssl 주석 처리                           #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+# # MySQL 접속 확인
+# echo "MySQL 접속 확인 중..."
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+# if [ $? -ne 0 ]; then
+#     echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+#     exit 1
+# else
+#     echo "✅ MySQL 로그인에 성공했습니다."
+# fi
+
+# # 임시파일 생성
+# db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+
+# # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
+# echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
+# vhost_lines=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g')
+# # vhost_line=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
+# if [ -n "$vhost_lines" ]; then
+#     # sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_NAME"
+#     # echo "✅ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
+#     for vhost_line in $vhost_lines; do
+#         # 파일 경로 추출
+#         path=$(echo "$vhost_line" | awk -F':' '{print $1}')
+#         # 라인 번호 추출
+#         line=$(echo "$vhost_line" | awk -F':' '{print $2}')
+#         echo "✅ 파일 경로: $vhost_line"
+#         if [ -f "$path" ]; then
+#             # 해당 라인부터 VirtualHost 종료까지 주석 처리
+#             sed -i.bak "${line},/<\/VirtualHost>/ s/^/#/" "$path"
+#             echo "✅ $path 파일에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
+#         else
+#             echo "❗️ 파일을 찾을 수 없습니다: $path"
+#             exit 1
+#         fi
+#     done
+# else
+#     echo "❗️ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
+#     exit 1
+# fi
+
+# # cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
+# echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
+# if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME"; then
+#     sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_NAME"
+#     echo "✅ CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
+# else
+#     echo "❗️ CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."
+#     exit 1
+# fi
+
+# # 사용자 삭제 및 디렉토리 정리
+# echo "$USER_ACCOUNT 사용자 및 관련 디렉토리 삭제 중..."
+# /usr/sbin/userdel "$USER_ACCOUNT"
+# rm -rf "$HOME_DIR/$USER_ACCOUNT"
+# rm -rf "$LOG_DIR"
+# if [ $? -eq 0 ]; then
+#     echo "✅ $USER_ACCOUNT 계정 및 관련 디렉토리를 삭제했습니다."
+# else
+#     echo "❗️ $USER_ACCOUNT 계정 삭제에 실패했습니다."
+#     exit 1
+# fi
+
+# echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
+# {
+#     echo "DROP DATABASE IF EXISTS $2;"
+#     echo "DROP USER IF EXISTS '$3'@'%';"
+#     echo "DROP USER IF EXISTS '$3'@'localhost';"
+# } >> $db_temp
+
+# # MySQL 쿼리 실행
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
+# if [ $? -eq 0 ]; then
+#     echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
+# else
+#     echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
+#     exit 1
+# fi
+
+
+# # Apache 설정 테스트 및 적용
+# echo "✅ Apache 설정 파일 테스트 중..."
+# $BIN -t
+# if [ $? -eq 0 ]; then
+#     echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
+#     $BIN graceful  # Apache 재시작
+# else
+#     echo "❌ Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
+#     exit 1
+# fi
+
+# # 임시 파일 삭제
+# rm -rf "$db_temp"
+# echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."

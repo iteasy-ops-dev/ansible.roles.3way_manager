@@ -16,21 +16,21 @@
   debug:
     msg: "{{ last_octet }}"
 
-- name: Include OS-specific variables.
-  ansible.builtin.include_vars: "vars_{{ last_octet }}.yml"
+# - name: Include OS-specific variables.
+#   ansible.builtin.include_vars: "vars_{{ last_octet }}.yml"
 
-- name: Include OS-specific tasks.
-  ansible.builtin.include_tasks: "{{ setup }}-raw-task.yml"
+# - name: Include OS-specific tasks.
+#   ansible.builtin.include_tasks: "{{ setup }}-raw-task.yml"
 
 # setup
-# - name: Include 232 setup tasks
-#   ansible.builtin.include_tasks: "{{ setup }}-raw-task-232.yml"
-#   when: last_octet == "232"
+- name: Include 232 setup tasks
+  ansible.builtin.include_tasks: "{{ setup }}-raw-task-232.yml"
+  when: last_octet == "232"
 
-# - name: Include 26, 35, 41 setup tasks
-#   ansible.builtin.include_tasks: "{{ setup }}-raw-task-26.yml"
-#   when: (last_octet == "26") or (last_octet == "35") or (last_octet == "41")
+- name: Include 26, 35, 41 setup tasks
+  ansible.builtin.include_tasks: "{{ setup }}-raw-task-26.yml"
+  when: (last_octet == "26") or (last_octet == "35") or (last_octet == "41")
 
-# - name: Include default setup tasks
-#   ansible.builtin.include_tasks: "{{ setup }}-raw-task-default.yml"
-#   when: last_octet != "26" and last_octet != "232" and last_octet != "35" and last_octet != "41"
+- name: Include default setup tasks
+  ansible.builtin.include_tasks: "{{ setup }}-raw-task-default.yml"
+  when: last_octet != "26" and last_octet != "232" and last_octet != "35" and last_octet != "41"

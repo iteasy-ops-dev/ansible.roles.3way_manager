@@ -125,7 +125,8 @@ if [ $closest_larger_in_vhost_tail -eq -1 ]; then
 fi
 
 echo "✅ vhost 주석 처리: ${closest_smaller_in_vhost_head} < ${vhost_line} < ${closest_larger_in_vhost_tail}"
-sed -n "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}p" $VHOST_CONF_NAME
+# 디버깅용 출력
+# sed -n "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}p" $VHOST_CONF_NAME
 sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #                                                           #
@@ -158,7 +159,8 @@ if [ $closest_larger_in_cband_tail -eq -1 ]; then
   exit 1
 fi
 echo "✅ Cband 주석 처리: ${closest_smaller_in_cband_head} < ${cband_line} < ${closest_larger_in_cband_tail}"
-sed -n "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}p" $CBAND_CONF_NAME
+# 디버깅용 출력
+# sed -n "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}p" $CBAND_CONF_NAME
 sed -i "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #                                                           #
@@ -180,115 +182,82 @@ ssl_line=$(grep -n "DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$SSL_CONF_NAME" |
 
 # ssl_line이 비어있거나 존재하지 않으면 해당 로직을 건너뜀
 if [ -z "$ssl_line" ]; then
-  echo "❗️ ssl 주석 처리: DocumentRoot가 $SSL_CONF_NAME 에 존재하지 않습니다. 주석 처리를 건너뜁니다."
-  exit 0  # 또는 exit 1을 통해 다른 종료 코드도 가능
+  echo "🔔 ssl 주석 처리: DocumentRoot가 $SSL_CONF_NAME 에 존재하지 않습니다. 주석 처리를 건너뜁니다."
+else
+    closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${ssl_head[@]}")
+    closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${ssl_tail[@]}")
+
+    # 결과 출력
+    if [ $closest_smaller_in_ssl_head -eq -1 ]; then
+        echo "❌ ssl 주석 처리: ssl_head에서 입력값보다 작은 수가 없습니다."
+        exit 1
+    fi
+
+    if [ $closest_larger_in_ssl_tail -eq -1 ]; then
+        echo "❌ ssl 주석 처리: ssl_tail에서 입력값보다 큰 수가 없습니다."
+        exit 1
+    fi
+
+    echo "✅ ssl 주석 처리: ${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
+    # 디버깅용 출력
+    # sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
+    sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
 fi
-
-closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${ssl_head[@]}")
-closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${ssl_tail[@]}")
-
-# 결과 출력
-if [ $closest_smaller_in_ssl_head -eq -1 ]; then
-  echo "❌ ssl 주석 처리: ssl_head에서 입력값보다 작은 수가 없습니다."
-  exit 1
-fi
-
-if [ $closest_larger_in_ssl_tail -eq -1 ]; then
-  echo "❌ ssl 주석 처리: ssl_tail에서 입력값보다 큰 수가 없습니다."
-  exit 1
-fi
-
-echo "✅ ssl 주석 처리: ${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
-sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
-sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #                                                           #
 #                     ssl 주석 처리                           #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                사용자 삭제 및 디렉토리 정리                      #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+echo "$USER_ACCOUNT 사용자 및 관련 디렉토리 삭제 중..."
+/usr/sbin/userdel "$USER_ACCOUNT"
+rm -rf "$HOME_DIR/$USER_ACCOUNT"
+rm -rf "$LOG_DIR"
+if [ $? -eq 0 ]; then
+    echo "✅ $USER_ACCOUNT 계정 및 관련 디렉토리를 삭제했습니다."
+else
+    echo "❗️ $USER_ACCOUNT 계정 삭제에 실패했습니다."
+    exit 1
+fi
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                           #
+#                사용자 삭제 및 디렉토리 정리                      #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
+{
+    echo "DROP DATABASE IF EXISTS $2;"
+    echo "DROP USER IF EXISTS '$3'@'%';"
+    echo "DROP USER IF EXISTS '$3'@'localhost';"
+} >> $db_temp
+
+# MySQL 쿼리 실행
+mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
+if [ $? -eq 0 ]; then
+    echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
+else
+    echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
+    exit 1
+fi
 
 
+# Apache 설정 테스트 및 적용
+echo "✅ Apache 설정 파일 테스트 중..."
+$BIN -t
+if [ $? -eq 0 ]; then
+    echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
+    $BIN graceful  # Apache 재시작
+else
+    echo "❌ Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
+    exit 1
+fi
 
-
-
-# # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
-# echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
-# vhost_lines=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g')
-# # vhost_line=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
-# if [ -n "$vhost_lines" ]; then
-#     # sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_NAME"
-#     # echo "✅ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
-#     for vhost_line in $vhost_lines; do
-#         # 파일 경로 추출
-#         path=$(echo "$vhost_line" | awk -F':' '{print $1}')
-#         # 라인 번호 추출
-#         line=$(echo "$vhost_line" | awk -F':' '{print $2}')
-#         echo "✅ 파일 경로: $vhost_line"
-#         if [ -f "$path" ]; then
-#             # 해당 라인부터 VirtualHost 종료까지 주석 처리
-#             sed -i.bak "${line},/<\/VirtualHost>/ s/^/#/" "$path"
-#             echo "✅ $path 파일에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
-#         else
-#             echo "❗️ 파일을 찾을 수 없습니다: $path"
-#             exit 1
-#         fi
-#     done
-# else
-#     echo "❗️ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
-#     exit 1
-# fi
-
-# # cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
-# echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
-# if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME"; then
-#     sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_NAME"
-#     echo "✅ CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
-# else
-#     echo "❗️ CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."
-#     exit 1
-# fi
-
-# # 사용자 삭제 및 디렉토리 정리
-# echo "$USER_ACCOUNT 사용자 및 관련 디렉토리 삭제 중..."
-# /usr/sbin/userdel "$USER_ACCOUNT"
-# rm -rf "$HOME_DIR/$USER_ACCOUNT"
-# rm -rf "$LOG_DIR"
-# if [ $? -eq 0 ]; then
-#     echo "✅ $USER_ACCOUNT 계정 및 관련 디렉토리를 삭제했습니다."
-# else
-#     echo "❗️ $USER_ACCOUNT 계정 삭제에 실패했습니다."
-#     exit 1
-# fi
-
-# echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
-# {
-#     echo "DROP DATABASE IF EXISTS $2;"
-#     echo "DROP USER IF EXISTS '$3'@'%';"
-#     echo "DROP USER IF EXISTS '$3'@'localhost';"
-# } >> $db_temp
-
-# # MySQL 쿼리 실행
-# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
-# if [ $? -eq 0 ]; then
-#     echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
-# else
-#     echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
-#     exit 1
-# fi
-
-
-# # Apache 설정 테스트 및 적용
-# echo "✅ Apache 설정 파일 테스트 중..."
-# $BIN -t
-# if [ $? -eq 0 ]; then
-#     echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
-#     $BIN graceful  # Apache 재시작
-# else
-#     echo "❌ Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
-#     exit 1
-# fi
-
-# # 임시 파일 삭제
-# rm -rf "$db_temp"
-# echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."
+# 임시 파일 삭제
+rm -rf "$db_temp"
+echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."

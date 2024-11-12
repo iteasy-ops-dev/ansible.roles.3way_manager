@@ -15,7 +15,10 @@ for arg in "$@"; do
     --db_passwd=*) DB_USER_PASSWORD="${arg#*=}" ;; 
     --db_admin=*) DB_ROOT_USER="${arg#*=}" ;; 
     --db_admin_passwd=*) DB_ROOT_PASSWORD="${arg#*=}" ;; 
-    *) echo "Unknown option: $arg" ;;
+    *) 
+        echo "Unknown option: $arg" 
+        exit 1
+        ;;
   esac
 done
 

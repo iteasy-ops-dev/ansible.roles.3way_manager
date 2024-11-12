@@ -157,9 +157,9 @@ ssl_tail=($(grep -n "</VirtualHost>" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut
 
 ssl_line=$(grep -n "DocumentRoot /home/$USER_ACCOUNT/www" "$SSL_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
 
-closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${cband_head[@]}")
+closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${ssl_head[@]}")
 
-closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${cband_tail[@]}")
+closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${ssl_tail[@]}")
 
 # 결과 출력
 if [ $closest_smaller_in_ssl_head -eq -1 ]; then

@@ -2,9 +2,9 @@
 # tasks file for iteasy.ansible.roles.3way_manager
 - name: Copy the shell script to remote server
   copy:
-    src: files/create-26           # 로컬에 있는 쉘 스크립트 경로
-    dest: /tmp/create           # 원격 서버에 전송될 경로
-    mode: '0755'                              # 실행 권한 설정
+    src: files/remove           # 로컬에 있는 쉘 스크립트 경로
+    dest: /tmp/remove           # 원격 서버에 전송될 경로
+    mode: '0755'                # 실행 권한 설정
 
 - name: Excute
   become_user: root
@@ -12,20 +12,19 @@
   register: result
   raw: |
     set -e && \
-    /tmp/create \
+    /tmp/remove \
     --bin={{ bin }} \
     --home_dir={{ home_dir }} \
     --vhost_path={{ vhost_path }} \
     --cband_path={{ cband_path }} \
     --log_dir={{ log_dir }}{{ user_id }} \
     --account={{ user_id }} \
-    --user_pass'{{ user_pass }}' \
+    --domain={{ domain }} \
     --db_name={{ db_name }} \
     --db_user={{ db_user }} \
-    --db_passwd='{{ db_password }}' \
     --db_admin{{ mysql_root_user }} \
     --db_admin_passwd='{{ mysql_root_password }}' && \
-    rm -rf /tmp/create
+    rm -rf /tmp/remove
 
 - name: Debug
   debug:

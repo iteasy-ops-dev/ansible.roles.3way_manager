@@ -1,0 +1,110 @@
+#!/bin/bash
+# 변수 선언
+for arg in "$@"; do
+  case $arg in
+    --bin=*) BIN="${arg#*=}" ;; 
+    --home_dir=*) HOME_DIR="${arg#*=}" ;; 
+    --vhost_path=*) VHOST_CONF_NAME="${arg#*=}" ;; 
+    --cband_path=*) CBAND_CONF_NAME="${arg#*=}" ;; 
+    --log_dir=*) LOG_DIR="${arg#*=}" ;; 
+    --account=*) USER_ACCOUNT="${arg#*=}" ;; 
+    --domain=*) DOMAIN="${arg#*=}" ;; 
+    --db_name=*) DB_NAME="${arg#*=}" ;; 
+    --db_user=*) DB_USER="${arg#*=}" ;; 
+    --db_admin=*) DB_ROOT_USER="${arg#*=}" ;; 
+    --db_admin_passwd=*) DB_ROOT_PASSWORD="${arg#*=}" ;; 
+    *) echo "Unknown option: $arg" ;;
+  esac
+done
+
+CURRENT_DATE=$(date +"%Y-%m-%d")
+
+# 디버깅용 출력
+echo "=== ✅ 입력 변수 확인 ==="
+echo "USER_ACCOUNT: $USER_ACCOUNT"
+echo "DOMAIN: $DOMAIN"
+echo "DB_NAME: $DB_NAME"
+echo "DB_USER: $DB_USER"
+echo "DB_ROOT_USER: $DB_ROOT_USER"
+echo "DB_ROOT_PASSWORD: $DB_ROOT_PASSWORD"
+echo "VHOST_CONF_NAME: $VHOST_CONF_NAME"
+echo "CBAND_CONF_NAME: $CBAND_CONF_NAME"
+echo "LOG_DIR: $LOG_DIR"
+echo "BIN: $BIN"
+echo "CURRENT_DATE: $CURRENT_DATE"
+echo "===================="
+
+# # MySQL 접속 확인
+# echo "MySQL 접속 확인 중..."
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+# if [ $? -ne 0 ]; then
+#     echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+#     exit 1
+# else
+#     echo "✅ MySQL 로그인에 성공했습니다."
+# fi
+
+# # 임시파일 생성
+# db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+
+# # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
+# echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
+# vhost_line=$($BIN -S | grep "$USER_ACCOUNT.web2002.kr" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
+# if [ -n "$vhost_line" ]; then
+#     sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_NAME"
+#     echo "✅ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
+# else
+#     echo "❗️ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
+# fi
+
+# # cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
+# echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
+# if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME"; then
+#     sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_NAME"
+#     echo "✅ CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
+# else
+#     echo "❗️ CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."
+# fi
+
+# # 사용자 삭제 및 디렉토리 정리
+# echo "$USER_ACCOUNT 사용자 및 관련 디렉토리 삭제 중..."
+# /usr/sbin/userdel "$USER_ACCOUNT"
+# rm -rf "$HOME_DIR/$USER_ACCOUNT"
+# rm -rf "$LOG_DIR"
+# if [ $? -eq 0 ]; then
+#     echo "✅ $USER_ACCOUNT 계정 및 관련 디렉토리를 삭제했습니다."
+# else
+#     echo "❗️ $USER_ACCOUNT 계정 삭제에 실패했습니다."
+# fi
+
+# echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
+# {
+#     echo "DROP DATABASE IF EXISTS $2;"
+#     echo "DROP USER IF EXISTS '$3'@'%';"
+#     echo "DROP USER IF EXISTS '$3'@'localhost';"
+# } >> $db_temp
+
+# # MySQL 쿼리 실행
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
+# if [ $? -eq 0 ]; then
+#     echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
+# else
+#     echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
+#     exit 1
+# fi
+
+
+# # Apache 설정 테스트 및 적용
+# echo "✅ Apache 설정 파일 테스트 중..."
+# $BIN -t
+# if [ $? -eq 0 ]; then
+#     echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
+#     $BIN graceful  # Apache 재시작
+# else
+#     echo "❌ Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
+#     exit 1
+# fi
+
+# # 임시 파일 삭제
+# rm -rf "$db_temp"
+# echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."

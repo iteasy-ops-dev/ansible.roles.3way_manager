@@ -1,0 +1,5 @@
+bin: "apachectl"
+home_dir: "/home"
+vhost_path: "/etc/httpd/conf.d/vhosts.conf"
+cband_path: "/etc/httpd/conf.d/cband.conf"
+log_dir: "/etc/httpd/logs/vhosts/"

@@ -8,10 +8,6 @@
   raw: "curl -s ifconfig.me 2>/dev/null | cut -d'.' -f4"
   register: result
 
-# - name: Debug for IP
-#   debug:
-#     msg: "{{ result.stdout }}"
-
 - name: Assign trimmed output to variable
   set_fact:
     last_octet: "{{ result.stdout | trim }}"
@@ -20,52 +16,21 @@
   debug:
     msg: "{{ last_octet }}"
 
-# - name: Debug for IP
-#   debug:
-#     msg: "{{ last_octet }}"
+- name: Include OS-specific variables.
+  ansible.builtin.include_vars: "vars_{{ last_octet }}.yml"
 
-# - name: Debug for IP 26
-#   debug:
-#     msg: "Server IP is 26"
-#   when: last_octet == "26"
-
-# - name: Debug for IP 232
-#   debug:
-#     msg: "Server IP is 232"
-#   when: last_octet == "232"
-
-# - name: Debug for other IPs
-#   debug:
-#     msg: "Server IP is neither 26 nor 232"
-#   when: last_octet != "26" and last_octet != "232"
+- name: Include OS-specific tasks.
+  ansible.builtin.include_vars: "{{ setup }}-raw-task.yml"
 
 # setup
-- name: Include 232 setup tasks
-  ansible.builtin.include_tasks: "{{ setup }}-raw-task-232.yml"
-  when: last_octet == "232"
-
-- name: Include 26, 35, 41 setup tasks
-  ansible.builtin.include_tasks: "{{ setup }}-raw-task-26.yml"
-  when: (last_octet == "26") or (last_octet == "35") or (last_octet == "41")
-
-- name: Include default setup tasks
-  ansible.builtin.include_tasks: "{{ setup }}-raw-task-default.yml"
-  when: last_octet != "26" and last_octet != "232" and last_octet != "35" and last_octet != "41"
-
-
-
-# remove
-# - name: Include default remove tasks
-#   ansible.builtin.include_tasks: "remove-raw-task-default.yml"
-#   when: last_octet != "26" and last_octet != "232"
-
-# - name: Include 26 remove tasks
-#   ansible.builtin.include_tasks: "remove-raw-task-26.yml"
-#   when: last_octet == "26"
-
-# - name: Include 232 remove tasks
-#   ansible.builtin.include_tasks: "remove-raw-task-232.yml"
+# - name: Include 232 setup tasks
+#   ansible.builtin.include_tasks: "{{ setup }}-raw-task-232.yml"
 #   when: last_octet == "232"
 
-# update-cband
-# update-access
+# - name: Include 26, 35, 41 setup tasks
+#   ansible.builtin.include_tasks: "{{ setup }}-raw-task-26.yml"
+#   when: (last_octet == "26") or (last_octet == "35") or (last_octet == "41")
+
+# - name: Include default setup tasks
+#   ansible.builtin.include_tasks: "{{ setup }}-raw-task-default.yml"
+#   when: last_octet != "26" and last_octet != "232" and last_octet != "35" and last_octet != "41"

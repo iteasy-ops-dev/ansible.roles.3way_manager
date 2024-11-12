@@ -12,30 +12,30 @@
   raw: "wget -O {{ unique_filename }} https://raw.githubusercontent.com/iteasy-ops-dev/ansible.roles.3way_manager/refs/heads/main/files/remove-default"
   register: result
 
-- name: Excute
-  become_user: root
-  become: true
-  register: result
-  raw: |
-    set -e && \
-    chmod 755 {{ unique_filename }} && \
-    {{ unique_filename }} \
-    --account={{ user_id }} \
-    --domain={{ domain }} \
-    --db_name={{ db_name }} \
-    --db_user={{ db_user }} \
-    --db_admin={{ mysql_root_user }} \
-    --db_admin_passwd='{{ mysql_root_password }}' && \
-    rm -rf {{ unique_filename }}
-
 # - name: Excute
 #   become_user: root
 #   become: true
 #   register: result
 #   raw: |
-#     chmod 755 {{ unique_filename }}
-#     {{ unique_filename }} {{ user_id }} {{ db_name }} {{ db_user }} {{ mysql_root_user }} '{{ mysql_root_password }}'
+#     set -e && \
+#     chmod 755 {{ unique_filename }} && \
+#     {{ unique_filename }} \
+#     --account={{ user_id }} \
+#     --domain={{ domain }} \
+#     --db_name={{ db_name }} \
+#     --db_user={{ db_user }} \
+#     --db_admin={{ mysql_root_user }} \
+#     --db_admin_passwd='{{ mysql_root_password }}' && \
 #     rm -rf {{ unique_filename }}
+
+- name: Excute
+  become_user: root
+  become: true
+  register: result
+  raw: |
+    chmod 755 {{ unique_filename }}
+    {{ unique_filename }} {{ user_id }} {{ db_name }} {{ db_user }} {{ mysql_root_user }} '{{ mysql_root_password }}'
+    rm -rf {{ unique_filename }}
 
 - name: Debug
   debug:

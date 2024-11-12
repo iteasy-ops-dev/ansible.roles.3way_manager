@@ -13,6 +13,7 @@ DB_NAME="$2"
 DB_USER="$3"
 DB_ROOT_USER="$4"
 DB_ROOT_PASSWORD="$5"
+
 BIN="apachectl"
 HOME_DIR="/home"
 VHOST_CONF_NAME="/etc/httpd/conf.d/vhosts.conf"

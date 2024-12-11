@@ -45,3 +45,60 @@ License
 ------------
 BSD
 
+
+
+
+```
+flask/
+├── app.py
+├── blueprints/
+│   ├── init.py
+│   ├── abuse_report.py
+│   ├── alarm.py
+│   ├── cloud_ips_report.py
+│   ├── customer.py
+│   ├── customer_report.py
+│   ├── cve_report.py
+│   ├── ips_report.py
+│   ├── monitoring.py
+│   ├── networkflow.py
+│   ├── search.py
+│   └── waf_report.py
+├── templates/
+│   ├── base.html
+│   ├── abuse_report.html
+│   ├── alarm_page.html
+│   ├── cloud_ips_report.html
+│   ├── customer_report.html
+│   ├── customer_report_detail.html
+│   ├── cve_detail.html
+│   ├── cve_report.html
+│   ├── index.html
+│   ├── ips_report.html
+│   ├── monitoring.html
+│   ├── networkflow.html
+│   ├── register_customer.html
+│   ├── search.html
+│   └── waf_report.html
+├── static/
+│   ├── charts
+│   ├── fonts
+│   ├── picture
+│   └── report
+│       ├── abuse_report/
+│       └── waf/
+│   └── script
+├── utils/
+│   ├── init.py
+│   ├── abuse_report_mail.py
+│   ├── elasticsearch_utils.py
+│   ├── mail_body.html
+│   ├── report_generator.py
+│   ├── report_template.html
+│   ├── report_template_cloud.html
+│   ├── report_utils.py
+│   └── search_utils.py
+├── log/
+├── googlesheet/
+└── requirements.txt
+```

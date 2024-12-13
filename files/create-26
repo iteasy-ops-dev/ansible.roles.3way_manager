@@ -8,17 +8,78 @@
 # $5: DB 사용자 비밀번호
 # $6: DB root 사용자 이름
 # $7: DB root 사용자 비밀번호
+# 초기화
+USER_ACCOUNT=""
+USER_PASSWORD=""
+DOMAINS=""
+DB_NAME=""
+DB_USER=""
+DB_USER_PASSWORD=""
+DB_ROOT_USER=""
+DB_ROOT_PASSWORD=""
+CBAND_LIMIT=""
+
+if [[ $# -eq 0 ]]; then
+  echo "❌  옵션이 설정되지 않았습니다. 옵션을 사용해주세요."
+  echo "❌  usage: ./stript.sh --user <user name> --userpwd <user password> --cband <cband limit(g)> --domains <domain.com domain1.com ... > [ --dbname <db name> ] [ --dbuser <db user> ] [ --dbuserpwd <db user password> ] [ --dbadmin <db admin> ] [ --dbadminpwd <db admin password> ]"
+  exit 1
+fi
+
+# 명령행 인수 처리
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  --user)
+    USER_ACCOUNT="$2"
+    shift 2
+    ;;
+  --userpwd)
+    USER_PASSWORD="$2"
+    shift 2
+    ;;
+  --domains)
+    DOMAINS="$2"
+    shift 2
+    ;;
+  --dbname)
+    DB_NAME="$2"
+    shift 2
+    ;;
+  --dbuser)
+    DB_USER="$2"
+    shift 2
+    ;;
+  --dbuserpwd)
+    DB_USER_PASSWORD="$2"
+    shift 2
+    ;;
+  --dbadmin)
+    DB_ROOT_USER="$2"
+    shift 2
+    ;;
+  --dbadminpwd)
+    DB_ROOT_PASSWORD="$2"
+    shift 2
+    ;;
+  --cband)
+    CBAND_LIMIT="$2"
+    shift 2
+    ;;
+  *)
+    echo "❌  알 수 없는 옵션: $1"
+    exit 1
+    ;;
+  esac
+done
 
 # 변수 선언
-USER_ACCOUNT="$1"
-USER_PASSWORD="$2"
-DB_NAME="$3"
-DB_USER="$4"
-DB_USER_PASSWORD="$5"
-DB_ROOT_USER="$6"
-DB_ROOT_PASSWORD="$7"
+# USER_ACCOUNT="$1"
+# USER_PASSWORD="$2"
+# DB_NAME="$3"
+# DB_USER="$4"
+# DB_USER_PASSWORD="$5"
+# DB_ROOT_USER="$6"
+# DB_ROOT_PASSWORD="$7"
 BIN="apachectl"
-# BIN="apachectl"
 HOME_DIR="/home"
 VHOST_CONF_NAME="/etc/httpd/conf.d/vhosts.conf"
 CBAND_CONF_NAME="/etc/httpd/conf.d/cband.conf"
@@ -29,6 +90,8 @@ CURRENT_DATE=$(date +"%Y-%m-%d")
 echo "=== ✅ 입력 변수 확인 ==="
 echo "USER_ACCOUNT: $USER_ACCOUNT"
 echo "USER_PASSWORD: $USER_PASSWORD"
+echo "DOMAINS: $DOMAINS"
+echo "CBAND_LIMIT: $CBAND_LIMIT"
 echo "DB_NAME: $DB_NAME"
 echo "DB_USER: $DB_USER"
 echo "DB_USER_PASSWORD: $DB_USER_PASSWORD"
@@ -41,29 +104,84 @@ echo "BIN: $BIN"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
 
-# MySQL 접속 확인
-echo "MySQL 접속 확인 중..."
-mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
-if [ $? -ne 0 ]; then
-    echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
-    exit 1
-else
-    echo "✅ MySQL 로그인에 성공했습니다."
+if [[ -z $USER_ACCOUNT || -z $USER_PASSWORD || -z $DOMAINS || -z $CBAND_LIMIT ]]; then
+  echo "❌  필수 옵션이 충족되지 않았습니다."
+  echo "❌  필수옵션: --user <user name> --userpwd <user password> --cband <cband limit(g)> --domains <domain.com domain1.com ... >"
+  exit 1
 fi
 
+function check_db_login() {
+  echo "check db login."
+  # MySQL 접속 확인
+  echo "MySQL 접속 확인 중..."
+  mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+  if [ $? -ne 0 ]; then
+    echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+    exit 1
+  else
+    echo "✅ MySQL 로그인에 성공했습니다."
+  fi
+
+}
+
+function create_db_config() {
+  echo "create db config."
+  db_temp=$(mktemp /tmp/db.create.conf_tempfile.XXXXXX)
+  # MySQL DB 및 사용자 생성
+  {
+    echo "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
+    echo "DROP USER IF EXISTS '$DB_USER'@'%';"
+    echo "DROP USER IF EXISTS '$DB_USER'@'localhost';"
+    echo "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+    echo "FLUSH PRIVILEGES;"
+  } >>$db_temp
+
+  # MySQL 쿼리 실행
+  mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
+  if [ $? -eq 0 ]; then
+    echo "✅ MySQL DB 및 사용자 생성 성공."
+  else
+    echo "❌ MySQL DB 및 사용자 생성 실패."
+    exit 1
+  fi
+  rm -rf cband_temp $db_temp
+
+}
+
+if [[ -z $DB_NAME || -z $DB_ROOT_USER || -z $DB_USER_PASSWORD || -z $DB_ROOT_USER || -z $DB_ROOT_PASSWORD ]]; then
+  echo "디비 작업 패싱하기"
+else
+  echo "디비 작업하기"
+  check_db_login
+  create_db_config
+fi
+
+# # MySQL 접속 확인
+# echo "MySQL 접속 확인 중..."
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+# if [ $? -ne 0 ]; then
+#   echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+#   exit 1
+# else
+#   echo "✅ MySQL 로그인에 성공했습니다."
+# fi
+#
 # 임시파일 생성 (고유한 이름으로)
 vhost_temp=$(mktemp /tmp/vhosts.conf_tempfile.XXXXXX)
 cband_temp=$(mktemp /tmp/cband.conf_tempfile.XXXXXX)
-db_temp=$(mktemp /tmp/db.create.conf_tempfile.XXXXXX)
+# db_temp=$(mktemp /tmp/db.create.conf_tempfile.XXXXXX)
 
 # 사용자 생성 및 패스워드 설정
 /usr/sbin/useradd -m -s /bin/bash -d $HOME_DIR/$USER_ACCOUNT -g www $USER_ACCOUNT
-echo "$USER_PASSWORD" | passwd --stdin $USER_ACCOUNT  # 패스워드 설정
+echo "$USER_PASSWORD" | passwd --stdin $USER_ACCOUNT # 패스워드 설정
 if [ $? -eq 0 ]; then
-    echo "✅ 사용자 $USER_ACCOUNT 계정 생성 및 비밀번호 설정 성공."
+  echo "✅ 사용자 $USER_ACCOUNT 계정 생성 및 비밀번호 설정 성공."
 else
-    echo "❌ 사용자 $USER_ACCOUNT 계정 생성 실패."
-    exit 1
+  echo "❌ 사용자 $USER_ACCOUNT 계정 생성 실패."
+  exit 1
 fi
 
 # 홈페이지 디렉토리 생성 및 설정
@@ -75,112 +193,114 @@ mkdir -p "$LOG_DIR"
 chmod 755 "$LOG_DIR"
 
 # 인덱스 파일 추가
-echo "$USER_ACCOUNT.web2002.kr" > $HOME_DIR/$USER_ACCOUNT/www/index.html
+echo "$USER_ACCOUNT.web2002.kr" >$HOME_DIR/$USER_ACCOUNT/www/index.html
 chown $USER_ACCOUNT:www $HOME_DIR/$USER_ACCOUNT/www/index.html
 
 # 가상호스트 설정
 {
-    echo ""
-    echo "# == $USER_ACCOUNT # $CURRENT_DATE =="
-    echo "<VirtualHost *:80>"
-    echo "    ServerAdmin webmaster@"   
-    echo "    DocumentRoot $HOME_DIR/$USER_ACCOUNT/www"
-    echo "    ServerName $USER_ACCOUNT.web2002.kr"
-    echo "    ServerAlias $USER_ACCOUNT.web2002.kr"
-    echo "    <Directory $HOME_DIR/$USER_ACCOUNT/www>" 
-    echo "        Options -ExecCGI   "  
-    echo "        AllowOverride All   "  
-    echo "        Order Deny,Allow   "  
-    echo "        Allow from all   "  
-    echo "        Require all granted   "  
-    echo "        RMode config   "
-    echo "        RUidGid $USER_ACCOUNT www   "
-    echo "    </Directory>   "  
-    echo "    ErrorLog logs/vhosts/$USER_ACCOUNT/$USER_ACCOUNT-error_log" 
-    echo "    CustomLog logs/vhosts/$USER_ACCOUNT/$USER_ACCOUNT-access_log combined"
-    echo "      php_admin_flag display_errors Off "  
-    echo "      php_admin_flag allow_url_fopen Off "  
-    echo "      php_admin_flag register_globals Off "  
-    echo "      php_admin_flag magic_quotes_gpc Off "  
-    echo "      php_admin_flag safe_mode Off "  
-    echo "      php_admin_flag session.auto_start Off "  
-    echo "      <IfModule cband_module> "  
-    echo "          CBandUser cband$USER_ACCOUNT"  
-    echo "      </IfModule> "  
-    echo "      RewriteEngine On "  
-    echo "      RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) "  
-    echo "      RewriteRule .* - [F] "  
-    echo "      RewriteCond %{REQUEST_URI} ^/error/509.html$  "  
-    echo "      RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]  "  
-    echo "      Include conf/nobots.conf  "  
-    echo "      <IfModule security2_module>  "  
-    echo "          Include conf/modsec_rules/modsecurity-middle.conf  "  
-    echo "          SecRuleEngine On  "  
-    echo "      </IfModule>"  
-    echo "</VirtualHost>" 
-    echo "# == $USER_ACCOUNT # $CURRENT_DATE =="
-} >> $vhost_temp
+  echo ""
+  echo "# == $USER_ACCOUNT # $CURRENT_DATE =="
+  echo "<VirtualHost *:80>"
+  echo "    ServerAdmin webmaster@"
+  echo "    DocumentRoot $HOME_DIR/$USER_ACCOUNT/www"
+  # echo "    ServerName $USER_ACCOUNT.web2002.kr"
+  # echo "    ServerAlias $USER_ACCOUNT.web2002.kr"
+  echo "    ServerName $DOMAINS"
+  echo "    ServerAlias $DOMAINS"
+  echo "    <Directory $HOME_DIR/$USER_ACCOUNT/www>"
+  echo "        Options -ExecCGI   "
+  echo "        AllowOverride All   "
+  echo "        Order Deny,Allow   "
+  echo "        Allow from all   "
+  echo "        Require all granted   "
+  echo "        RMode config   "
+  echo "        RUidGid $USER_ACCOUNT www   "
+  echo "    </Directory>   "
+  echo "    ErrorLog logs/vhosts/$USER_ACCOUNT/$USER_ACCOUNT-error_log"
+  echo "    CustomLog logs/vhosts/$USER_ACCOUNT/$USER_ACCOUNT-access_log combined"
+  echo "      php_admin_flag display_errors Off "
+  echo "      php_admin_flag allow_url_fopen Off "
+  echo "      php_admin_flag register_globals Off "
+  echo "      php_admin_flag magic_quotes_gpc Off "
+  echo "      php_admin_flag safe_mode Off "
+  echo "      php_admin_flag session.auto_start Off "
+  echo "      <IfModule cband_module> "
+  echo "          CBandUser cband$USER_ACCOUNT"
+  echo "      </IfModule> "
+  echo "      RewriteEngine On "
+  echo "      RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) "
+  echo "      RewriteRule .* - [F] "
+  echo "      RewriteCond %{REQUEST_URI} ^/error/509.html$  "
+  echo "      RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]  "
+  echo "      Include conf/nobots.conf  "
+  echo "      <IfModule security2_module>  "
+  echo "          Include conf/modsec_rules/modsecurity-middle.conf  "
+  echo "          SecRuleEngine On  "
+  echo "      </IfModule>"
+  echo "</VirtualHost>"
+  echo "# == $USER_ACCOUNT # $CURRENT_DATE =="
+} >>$vhost_temp
 
 # Vhosts 파일 백업 및 추가
 cp -arp $VHOST_CONF_NAME $VHOST_CONF_NAME.old
-cat $vhost_temp >> $VHOST_CONF_NAME
+cat $vhost_temp >>$VHOST_CONF_NAME
 
 # CBand 설정
 {
-    echo ""
-    echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
-    echo "<IfModule cband_module>"
-    echo "  <CBandUser cband$USER_ACCOUNT>"
-    echo "     CBandUserLimit 3Gi"
-    echo "     CBandUserPeriod 1D"
-    echo "     <Location /throttle-me>"
-    echo "       SetHandler cband-status-me"
-    echo "       AuthName cband-status-me"
-    echo "       AuthType Basic"
-    echo "       AuthUserFile /usr/local/apache/conf/.$USER_ACCOUNT"
-    echo "       require user $USER_ACCOUNT"
-    echo "     </Location>"
-    echo "  </CBandUser>"
-    echo "</IfModule>"
-    echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
-} >> $cband_temp
+  echo ""
+  echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
+  echo "<IfModule cband_module>"
+  echo "  <CBandUser cband$USER_ACCOUNT>"
+  echo "     CBandUserLimit $CBAND_LIMIT Gi"
+  echo "     CBandUserPeriod 1D"
+  echo "     <Location /throttle-me>"
+  echo "       SetHandler cband-status-me"
+  echo "       AuthName cband-status-me"
+  echo "       AuthType Basic"
+  echo "       AuthUserFile /usr/local/apache/conf/.$USER_ACCOUNT"
+  echo "       require user $USER_ACCOUNT"
+  echo "     </Location>"
+  echo "  </CBandUser>"
+  echo "</IfModule>"
+  echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
+} >>$cband_temp
 
 # CBand 파일 백업 및 추가
 cp -arp $CBAND_CONF_NAME $CBAND_CONF_NAME.old
-cat $cband_temp >> $CBAND_CONF_NAME
+cat $cband_temp >>$CBAND_CONF_NAME
 
 # MySQL DB 및 사용자 생성
-{
-    echo "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
-    echo "DROP USER IF EXISTS '$DB_USER'@'%';"
-    echo "DROP USER IF EXISTS '$DB_USER'@'localhost';"
-    echo "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
-    echo "FLUSH PRIVILEGES;"
-} >> $db_temp
-
-# MySQL 쿼리 실행
-mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
-if [ $? -eq 0 ]; then
-    echo "✅ MySQL DB 및 사용자 생성 성공."
-else
-    echo "❌ MySQL DB 및 사용자 생성 실패."
-    exit 1
-fi
+# {
+#   echo "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
+#   echo "DROP USER IF EXISTS '$DB_USER'@'%';"
+#   echo "DROP USER IF EXISTS '$DB_USER'@'localhost';"
+#   echo "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+#   echo "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+#   echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
+#   echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
+#   echo "FLUSH PRIVILEGES;"
+# } >>$db_temp
+#
+# # MySQL 쿼리 실행
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
+# if [ $? -eq 0 ]; then
+#   echo "✅ MySQL DB 및 사용자 생성 성공."
+# else
+#   echo "❌ MySQL DB 및 사용자 생성 실패."
+#   exit 1
+# fi
 
 # Apache 설정 테스트 및 적용
 $BIN -t
 if [ $? -eq 0 ]; then
-    echo "✅ Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
-    $BIN graceful
-    # $BIN graceful
+  echo "✅ Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
+  $BIN graceful
+  # $BIN graceful
 else
-    echo "❌ Apache 설정에 오류가 있습니다."
-    exit 1
+  echo "❌ Apache 설정에 오류가 있습니다."
+  exit 1
 fi
 
 # 임시 파일 삭제
-rm -rf $vhost_temp $cband_temp $db_temp
+rm -rf $vhost_temp $cband_temp
 echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."

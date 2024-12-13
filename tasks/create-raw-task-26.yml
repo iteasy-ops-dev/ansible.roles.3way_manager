@@ -11,7 +11,16 @@
   become: true
   register: result
   raw: |
-    /tmp/create {{ user_id }} {{ user_pass }} {{ db_name }} {{ db_user }} '{{ db_password }}' {{ mysql_root_user }} '{{ mysql_root_password }}'
+    /tmp/create \ 
+    --user {{ user_id }} \
+    --userpwd {{ user_pass }} \
+    --cband {{ }} \
+    --domains {{ }} \ 
+    --dbname {{ db_name }} \ 
+    --dbuser {{ db_user }} \
+    --dbuserpwd '{{ db_password }}' \
+    --dbadmin {{ mysql_root_user }} \ 
+    --dbadminpwd '{{ mysql_root_password }}' &&
     rm -rf /tmp/create
 
 - name: Debug

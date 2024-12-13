@@ -9,6 +9,7 @@ db_user: ""
 db_password: ""
 
 cband_limit: ""
+domain: ""
 
 mysql_root_user: ""
 mysql_root_password: ""

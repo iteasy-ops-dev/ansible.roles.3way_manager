@@ -14,8 +14,8 @@
     /tmp/create \ 
     --user {{ user_id }} \
     --userpwd {{ user_pass }} \
-    --cband {{ }} \
-    --domains {{ }} \ 
+    --cband {{ cband_limit }} \
+    --domains {{ domains }} \ 
     --dbname {{ db_name }} \ 
     --dbuser {{ db_user }} \
     --dbuserpwd '{{ db_password }}' \

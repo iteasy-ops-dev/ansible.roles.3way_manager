@@ -104,7 +104,7 @@ echo "BIN: $BIN"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
 
-if [[ -z $USER_ACCOUNT || -z $USER_PASSWORD || -z $DOMAINS || -z $CBAND_LIMIT ]]; then
+if [[ -z "$USER_ACCOUNT" || -z $USER_PASSWORD || -z $DOMAINS || -z $CBAND_LIMIT ]]; then
   echo "❌  필수 옵션이 충족되지 않았습니다."
   echo "❌  필수옵션: --user <user name> --userpwd <user password> --cband <cband limit(g)> --domains <domain.com domain1.com ... >"
   exit 1
@@ -137,17 +137,18 @@ function create_db_config() {
     echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' IDENTIFIED BY '$DB_USER_PASSWORD';"
     echo "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' IDENTIFIED BY '$DB_USER_PASSWORD';"
     echo "FLUSH PRIVILEGES;"
-  } >>$db_temp
+  } >>"$db_temp"
 
   # MySQL 쿼리 실행
-  mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
-  if [ $? -eq 0 ]; then
+  #  mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
+  #  if [ $? -eq 0 ]; then
+  if mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"; then
     echo "✅ MySQL DB 및 사용자 생성 성공."
   else
     echo "❌ MySQL DB 및 사용자 생성 실패."
     exit 1
   fi
-  rm -rf cband_temp $db_temp
+  rm -rf cband_temp "$db_temp"
 
 }
 
@@ -175,8 +176,8 @@ cband_temp=$(mktemp /tmp/cband.conf_tempfile.XXXXXX)
 # db_temp=$(mktemp /tmp/db.create.conf_tempfile.XXXXXX)
 
 # 사용자 생성 및 패스워드 설정
-/usr/sbin/useradd -m -s /bin/bash -d $HOME_DIR/$USER_ACCOUNT -g www $USER_ACCOUNT
-echo "$USER_PASSWORD" | passwd --stdin $USER_ACCOUNT # 패스워드 설정
+/usr/sbin/useradd -m -s /bin/bash -d $HOME_DIR/"$USER_ACCOUNT" -g www "$USER_ACCOUNT"
+echo "$USER_PASSWORD" | passwd --stdin "$USER_ACCOUNT" # 패스워드 설정
 if [ $? -eq 0 ]; then
   echo "✅ 사용자 $USER_ACCOUNT 계정 생성 및 비밀번호 설정 성공."
 else
@@ -185,16 +186,16 @@ else
 fi
 
 # 홈페이지 디렉토리 생성 및 설정
-chmod 701 $HOME_DIR/$USER_ACCOUNT
-mkdir -p $HOME_DIR/$USER_ACCOUNT/www
-chmod 755 $HOME_DIR/$USER_ACCOUNT/www
-chown $USER_ACCOUNT:www $HOME_DIR/$USER_ACCOUNT/www
+chmod 701 $HOME_DIR/"$USER_ACCOUNT"
+mkdir -p $HOME_DIR/"$USER_ACCOUNT"/www
+chmod 755 $HOME_DIR/"$USER_ACCOUNT"/www
+chown "$USER_ACCOUNT":www $HOME_DIR/"$USER_ACCOUNT"/www
 mkdir -p "$LOG_DIR"
 chmod 755 "$LOG_DIR"
 
 # 인덱스 파일 추가
-echo "$USER_ACCOUNT.web2002.kr" >$HOME_DIR/$USER_ACCOUNT/www/index.html
-chown $USER_ACCOUNT:www $HOME_DIR/$USER_ACCOUNT/www/index.html
+echo "$USER_ACCOUNT.web2002.kr" >$HOME_DIR/"$USER_ACCOUNT"/www/index.html
+chown "$USER_ACCOUNT":www $HOME_DIR/"$USER_ACCOUNT"/www/index.html
 
 # 가상호스트 설정
 {
@@ -203,9 +204,9 @@ chown $USER_ACCOUNT:www $HOME_DIR/$USER_ACCOUNT/www/index.html
   echo "<VirtualHost *:80>"
   echo "    ServerAdmin webmaster@"
   echo "    DocumentRoot $HOME_DIR/$USER_ACCOUNT/www"
-  # echo "    ServerName $USER_ACCOUNT.web2002.kr"
+  echo "    ServerName $USER_ACCOUNT.web2002.kr"
   # echo "    ServerAlias $USER_ACCOUNT.web2002.kr"
-  echo "    ServerName $DOMAINS"
+  #   echo "    ServerName $DOMAINS"
   echo "    ServerAlias $DOMAINS"
   echo "    <Directory $HOME_DIR/$USER_ACCOUNT/www>"
   echo "        Options -ExecCGI   "
@@ -239,11 +240,11 @@ chown $USER_ACCOUNT:www $HOME_DIR/$USER_ACCOUNT/www/index.html
   echo "      </IfModule>"
   echo "</VirtualHost>"
   echo "# == $USER_ACCOUNT # $CURRENT_DATE =="
-} >>$vhost_temp
+} >>"$vhost_temp"
 
 # Vhosts 파일 백업 및 추가
 cp -arp $VHOST_CONF_NAME $VHOST_CONF_NAME.old
-cat $vhost_temp >>$VHOST_CONF_NAME
+cat "$vhost_temp" >>$VHOST_CONF_NAME
 
 # CBand 설정
 {
@@ -251,7 +252,7 @@ cat $vhost_temp >>$VHOST_CONF_NAME
   echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
   echo "<IfModule cband_module>"
   echo "  <CBandUser cband$USER_ACCOUNT>"
-  echo "     CBandUserLimit $CBAND_LIMIT Gi"
+  echo "     CBandUserLimit ${CBAND_LIMIT}Gi"
   echo "     CBandUserPeriod 1D"
   echo "     <Location /throttle-me>"
   echo "       SetHandler cband-status-me"
@@ -263,11 +264,11 @@ cat $vhost_temp >>$VHOST_CONF_NAME
   echo "  </CBandUser>"
   echo "</IfModule>"
   echo "# == cband$USER_ACCOUNT # $CURRENT_DATE =="
-} >>$cband_temp
+} >>"$cband_temp"
 
 # CBand 파일 백업 및 추가
 cp -arp $CBAND_CONF_NAME $CBAND_CONF_NAME.old
-cat $cband_temp >>$CBAND_CONF_NAME
+cat "$cband_temp" >>$CBAND_CONF_NAME
 
 # MySQL DB 및 사용자 생성
 # {
@@ -291,16 +292,16 @@ cat $cband_temp >>$CBAND_CONF_NAME
 # fi
 
 # Apache 설정 테스트 및 적용
-$BIN -t
-if [ $? -eq 0 ]; then
+# $BIN -t
+# if [ $? -eq 0 ]; then
+if $BIN -t; then
   echo "✅ Apache 설정에 문제가 없습니다. Apache를 재시작합니다."
   $BIN graceful
-  # $BIN graceful
 else
   echo "❌ Apache 설정에 오류가 있습니다."
   exit 1
 fi
 
 # 임시 파일 삭제
-rm -rf $vhost_temp $cband_temp
+rm -rf "$vhost_temp" "$cband_temp"
 echo "✅ 임시 파일 삭제 완료. 스크립트가 종료되었습니다."

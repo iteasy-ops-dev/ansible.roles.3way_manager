@@ -38,7 +38,6 @@ while [[ $# -gt 0 ]]; do
     ;;
   --domains)
     DOMAINS="$2"
-    # DOMAINS=$(echo "$2" | sed "s/\"//g")
     DOMAINS=${DOMAINS//\"/}
     DOMAINS=${DOMAINS//\,/}
     shift 2
@@ -208,8 +207,6 @@ chown "$USER_ACCOUNT":www $HOME_DIR/"$USER_ACCOUNT"/www/index.html
   echo "    ServerAdmin webmaster@"
   echo "    DocumentRoot $HOME_DIR/$USER_ACCOUNT/www"
   echo "    ServerName $USER_ACCOUNT.web2002.kr"
-  # echo "    ServerAlias $USER_ACCOUNT.web2002.kr"
-  #   echo "    ServerName $DOMAINS"
   echo "    ServerAlias $DOMAINS"
   echo "    <Directory $HOME_DIR/$USER_ACCOUNT/www>"
   echo "        Options -ExecCGI   "

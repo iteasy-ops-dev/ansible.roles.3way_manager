@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
   --domains)
     DOMAINS="$2"
     # DOMAINS=$(echo "$2" | sed "s/\"//g")
-    DOMAINS=${DOMAINS/\"//g}
+    DOMAINS=${DOMAINS//\"/}
     shift 2
     ;;
   --dbname)

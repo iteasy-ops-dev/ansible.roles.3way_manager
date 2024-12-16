@@ -42,12 +42,11 @@ echo "MYSQL_BIN: $MYSQL_BIN"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
 
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     함 수                                  #
+#                     함 수                                 #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # 배열에서 입력값보다 작은 숫자 중 가장 큰 수를 찾는 함수
 find_closest_smaller() {
   local number=$1
@@ -77,34 +76,55 @@ find_closest_larger() {
 
   echo $closest
 }
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     함 수                                  #
+#                     함 수                                 #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     DB 로그인 검사                           #
+#                     DB 삭제처리                           #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # MySQL 접속 확인
-echo "MySQL 접속 확인 중..."
-$MYSQL_BIN -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
-if [ $? -ne 0 ]; then
+if [[ -z $DB_NAME || -z $DB_USER || -z $DB_ROOT_USER || -z $DB_ROOT_PASSWORD ]]; then
+  echo "MySQL 접속 확인 중..."
+  $MYSQL_BIN -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+  if [ $? -ne 0 ]; then
     echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
     exit 1
-else
+  else
     echo "✅ MySQL 로그인에 성공했습니다."
+  fi
+
+  db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+
+  echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
+  {
+    echo "DROP DATABASE \`$DB_NAME\`;"
+    echo "DELETE FROM mysql.user WHERE User='$DB_USER';"
+    echo "DELETE FROM mysql.db WHERE User='$DB_USER';"
+    echo "FLUSH PRIVILEGES;"
+  } >>"$db_temp"
+
+  # MySQL 쿼리 실행
+  mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
+  if [ $? -eq 0 ]; then
+    echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
+  else
+    echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
+    exit 1
+  fi
 fi
 
 # 임시파일 생성
-db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     DB 로그인 검사                           #
+#                     DB 삭제처리                           #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
 # echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
@@ -143,11 +163,11 @@ db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 #     exit 1
 # fi
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     vhost 주석 처리                         #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 vhost_head=($(grep -n "\<VirtualHost" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
 vhost_tail=($(grep -n "</VirtualHost>" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
@@ -172,17 +192,17 @@ echo "✅ vhost 주석 처리: ${closest_smaller_in_vhost_head} < ${vhost_line} 
 # 디버깅용 출력
 # sed -n "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}p" $VHOST_CONF_NAME
 sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     vhost 주석 처리                         #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     Cband 주석 처리                         #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 cband_head=($(grep -n "\<IfModule" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
 cband_tail=($(grep -n "</IfModule>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
@@ -206,17 +226,17 @@ echo "✅ Cband 주석 처리: ${closest_smaller_in_cband_head} < ${cband_line} 
 # 디버깅용 출력
 # sed -n "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}p" $CBAND_CONF_NAME
 sed -i "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     cband 주석 처리                         #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     ssl 주석 처리                           #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 ssl_head=($(grep -n "\<VirtualHost" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
 ssl_tail=($(grep -n "</VirtualHost>" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
@@ -228,30 +248,30 @@ ssl_line=$(grep -n "DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$SSL_CONF_NAME" |
 if [ -z "$ssl_line" ]; then
   echo "🔔 ssl 주석 처리: DocumentRoot가 $SSL_CONF_NAME 에 존재하지 않습니다. 주석 처리를 건너뜁니다."
 else
-    closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${ssl_head[@]}")
-    closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${ssl_tail[@]}")
+  closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${ssl_head[@]}")
+  closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${ssl_tail[@]}")
 
-    # 결과 출력
-    if [ $closest_smaller_in_ssl_head -eq -1 ]; then
-        echo "❌ ssl 주석 처리: ssl_head에서 입력값보다 작은 수가 없습니다."
-        exit 1
-    fi
+  # 결과 출력
+  if [ $closest_smaller_in_ssl_head -eq -1 ]; then
+    echo "❌ ssl 주석 처리: ssl_head에서 입력값보다 작은 수가 없습니다."
+    exit 1
+  fi
 
-    if [ $closest_larger_in_ssl_tail -eq -1 ]; then
-        echo "❌ ssl 주석 처리: ssl_tail에서 입력값보다 큰 수가 없습니다."
-        exit 1
-    fi
+  if [ $closest_larger_in_ssl_tail -eq -1 ]; then
+    echo "❌ ssl 주석 처리: ssl_tail에서 입력값보다 큰 수가 없습니다."
+    exit 1
+  fi
 
-    echo "✅ ssl 주석 처리: ${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
-    # 디버깅용 출력
-    # sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
-    sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
+  echo "✅ ssl 주석 처리: ${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
+  # 디버깅용 출력
+  # sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
+  sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
 fi
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     ssl 주석 처리                           #
 #                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # 사용자 삭제 및 디렉토리 정리
 echo "$USER_ACCOUNT 사용자 및 관련 디렉토리 삭제 중..."
@@ -259,39 +279,38 @@ echo "$USER_ACCOUNT 사용자 및 관련 디렉토리 삭제 중..."
 rm -rf "$HOME_DIR/$USER_ACCOUNT"
 rm -rf "$LOG_DIR"
 if [ $? -eq 0 ]; then
-    echo "✅ $USER_ACCOUNT 계정 및 관련 디렉토리를 삭제했습니다."
+  echo "✅ $USER_ACCOUNT 계정 및 관련 디렉토리를 삭제했습니다."
 else
-    echo "❗️ $USER_ACCOUNT 계정 삭제에 실패했습니다."
-    exit 1
+  echo "❗️ $USER_ACCOUNT 계정 삭제에 실패했습니다."
+  exit 1
 fi
 
 echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
 {
-    echo "DROP DATABASE \`$DB_NAME\`;"
-    echo "DELETE FROM mysql.user WHERE User='$DB_USER';"
-    echo "DELETE FROM mysql.db WHERE User='$DB_USER';"
-    echo "FLUSH PRIVILEGES;"
-} >> "$db_temp"
+  echo "DROP DATABASE \`$DB_NAME\`;"
+  echo "DELETE FROM mysql.user WHERE User='$DB_USER';"
+  echo "DELETE FROM mysql.db WHERE User='$DB_USER';"
+  echo "FLUSH PRIVILEGES;"
+} >>"$db_temp"
 
 # MySQL 쿼리 실행
-mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" < "$db_temp"
+mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
 if [ $? -eq 0 ]; then
-    echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
+  echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
 else
-    echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
-    exit 1
+  echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
+  exit 1
 fi
-
 
 # Apache 설정 테스트 및 적용
 echo "✅ Apache 설정 파일 테스트 중..."
 $BIN -t
 if [ $? -eq 0 ]; then
-    echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
-    $BIN graceful  # Apache 재시작
+  echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
+  $BIN graceful # Apache 재시작
 else
-    echo "❌ Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
-    exit 1
+  echo "❌ Apache 설정 파일에 오류가 있습니다. 변경 사항을 다시 확인하세요."
+  exit 1
 fi
 
 # 임시 파일 삭제

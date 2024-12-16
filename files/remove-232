@@ -39,7 +39,7 @@ echo "===================="
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     함 수                                  #
+#                     함 수                                 #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # 배열에서 입력값보다 작은 숫자 중 가장 큰 수를 찾는 함수
@@ -73,32 +73,62 @@ find_closest_larger() {
 }
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     함 수                                  #
+#                     함 수                                 #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     DB 로그인 검사                           #
+#                     DB 삭제처리                           #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # MySQL 접속 확인
 echo "MySQL 접속 확인 중..."
-mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
-if [ $? -ne 0 ]; then
-  echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
-  exit 1
-else
-  echo "✅ MySQL 로그인에 성공했습니다."
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+# if [ $? -ne 0 ]; then
+#   echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+#   exit 1
+# else
+#   echo "✅ MySQL 로그인에 성공했습니다."
+# fi
+if [[ -z $DB_NAME || -z $DB_USER || -z $DB_ROOT_USER || -z $DB_ROOT_PASSWORD ]]; then
+  echo "MySQL 접속 확인 중..."
+  mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+  if [ $? -ne 0 ]; then
+    echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+    exit 1
+  else
+    echo "✅ MySQL 로그인에 성공했습니다."
+  fi
+  # 임시파일 생성
+  db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+
+  echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
+  {
+    echo "DROP DATABASE \`$DB_NAME\`;"
+    echo "DELETE FROM mysql.user WHERE User='$DB_USER';"
+    echo "DELETE FROM mysql.db WHERE User='$DB_USER';"
+    echo "FLUSH PRIVILEGES;"
+  } >>"$db_temp"
+
+  # MySQL 쿼리 실행
+  mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
+  if [ $? -eq 0 ]; then
+    echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
+  else
+    echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
+    exit 1
+  fi
 fi
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     DB 로그인 검사                           #
+#                     DB 삭제처리                           #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # 임시파일 생성
-db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+# db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 
 # # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
 # echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
@@ -139,7 +169,7 @@ db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     vhost 주석 처리                         #
+#                     vhost 주석 처리                       #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 vhost_head=($(grep -n "\<VirtualHost" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
@@ -259,27 +289,27 @@ else
   exit 1
 fi
 
-echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
-{
-  echo "DROP DATABASE \`$DB_NAME\`;"
-  echo "DELETE FROM mysql.user WHERE User='$DB_USER';"
-  echo "DELETE FROM mysql.db WHERE User='$DB_USER';"
-  echo "FLUSH PRIVILEGES;"
-} >>"$db_temp"
-
-# MySQL 쿼리 실행
-mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
-if [ $? -eq 0 ]; then
-  echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
-else
-  echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
-  exit 1
-fi
+# echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
+# {
+#   echo "DROP DATABASE \`$DB_NAME\`;"
+#   echo "DELETE FROM mysql.user WHERE User='$DB_USER';"
+#   echo "DELETE FROM mysql.db WHERE User='$DB_USER';"
+#   echo "FLUSH PRIVILEGES;"
+# } >>"$db_temp"
+#
+# # MySQL 쿼리 실행
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
+# if [ $? -eq 0 ]; then
+#   echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
+# else
+#   echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
+#   exit 1
+# fi
 
 # Apache 설정 테스트 및 적용
 echo "✅ Apache 설정 파일 테스트 중..."
-$BIN -t
-if [ $? -eq 0 ]; then
+# $BIN -t
+if $BIN -t; then
   echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
   $BIN graceful # Apache 재시작
 else

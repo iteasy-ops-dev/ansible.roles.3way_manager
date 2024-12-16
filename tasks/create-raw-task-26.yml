@@ -14,9 +14,9 @@
   raw: |
     /tmp/create \ 
     --user "{{ user_id }}" \
-    --userpwd "{{ user_pass }}" \
+    --userpwd "{{ user_pass }}" \ 
     --cband "{{ cband_limit }}" \
-    --domains \"{{ domains }}\" \ 
+    --domains "\"{{ domains }}\"" \ 
     --dbname "{{ db_name }}" \ 
     --dbuser "{{ db_user }}" \
     --dbuserpwd "{{ db_password }}" \

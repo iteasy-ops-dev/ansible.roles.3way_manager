@@ -13,15 +13,15 @@
   register: result
   raw: |
     /tmp/create \ 
-    --user {{ user_id }} \
-    --userpwd {{ user_pass }} \
-    --cband {{ cband_limit }} \
+    --user "{{ user_id }}" \
+    --userpwd "{{ user_pass }}" \
+    --cband "{{ cband_limit }}" \
     --domains "{{ domains | quote }}" \ 
-    --dbname '{{ db_name }}' \ 
-    --dbuser '{{ db_user }}' \
-    --dbuserpwd '{{ db_password }}' \
-    --dbadmin '{{ mysql_root_user }} \ 
-    --dbadminpwd '{{ mysql_root_password }}' &&
+    --dbname "{{ db_name }}" \ 
+    --dbuser "{{ db_user }}" \
+    --dbuserpwd "{{ db_password }}" \
+    --dbadmin "{{ mysql_root_user }}" \ 
+    --dbadminpwd "{{ mysql_root_password }}" &&
     rm -rf /tmp/create
 
 - name: Debug

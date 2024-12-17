@@ -88,7 +88,7 @@ find_closest_larger() {
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # MySQL 접속 확인
-if [[ -z $DB_NAME || -z $DB_USER || -z $DB_ROOT_USER || -z $DB_ROOT_PASSWORD ]]; then
+if [[ -n $DB_NAME && -n $DB_USER && -n $DB_ROOT_USER && -n $DB_ROOT_PASSWORD ]]; then
   echo "MySQL 접속 확인 중..."
   $MYSQL_BIN -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
   if [ $? -ne 0 ]; then

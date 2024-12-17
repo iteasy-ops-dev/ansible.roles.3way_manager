@@ -83,7 +83,7 @@ find_closest_larger() {
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # MySQL 접속 확인
-echo "MySQL 접속 확인 중..."
+# echo "MySQL 접속 확인 중..."
 # mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
 # if [ $? -ne 0 ]; then
 #   echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
@@ -91,7 +91,8 @@ echo "MySQL 접속 확인 중..."
 # else
 #   echo "✅ MySQL 로그인에 성공했습니다."
 # fi
-if [[ -z $DB_NAME || -z $DB_USER || -z $DB_ROOT_USER || -z $DB_ROOT_PASSWORD ]]; then
+# if [[ -z $DB_NAME || -z $DB_USER || -z $DB_ROOT_USER || -z $DB_ROOT_PASSWORD ]]; then
+if [[ -n $DB_NAME && -n $DB_USER && -n $DB_ROOT_USER && -n $DB_ROOT_PASSWORD ]]; then
   echo "MySQL 접속 확인 중..."
   mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
   if [ $? -ne 0 ]; then

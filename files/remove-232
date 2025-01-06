@@ -196,7 +196,7 @@ fi
 echo "✅ vhost 주석 처리: ${closest_smaller_in_vhost_head} < ${vhost_line} < ${closest_larger_in_vhost_tail}"
 # 디버깅용 출력
 # sed -n "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}p" $VHOST_CONF_NAME
-sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
+sed -i.$CURRENT_DATE "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     vhost 주석 처리                         #
@@ -208,9 +208,9 @@ sed -i "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /"
 #                     Cband 주석 처리                         #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-cband_head=($(grep -n "\<IfModule" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+cband_head=($(grep -n "\<CBandUser" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
-cband_tail=($(grep -n "</IfModule>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+cband_tail=($(grep -n "</CBandUser>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
 cband_line=$(grep -n "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
 
@@ -230,7 +230,7 @@ fi
 echo "✅ Cband 주석 처리: ${closest_smaller_in_cband_head} < ${cband_line} < ${closest_larger_in_cband_tail}"
 # 디버깅용 출력
 # sed -n "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}p" $CBAND_CONF_NAME
-sed -i "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
+sed -i.$CURRENT_DATE "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     cband 주석 처리                         #
@@ -270,7 +270,7 @@ else
   echo "✅ ssl 주석 처리: ${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
   # 디버깅용 출력
   # sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
-  sed -i "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
+  sed -i.$CURRENT_DATE "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
 fi
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #

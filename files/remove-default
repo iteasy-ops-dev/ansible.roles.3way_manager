@@ -54,7 +54,7 @@ find_closest_smaller() {
   local closest=-1
 
   for num in "$@"; do
-    if [ $num -lt $number ] && { [ $closest -eq -1 ] || [ $num -gt $closest ]; }; then
+    if [ $num -le $number ] && { [ $closest -eq -1 ] || [ $num -ge $closest ]; }; then
       closest=$num
     fi
   done
@@ -69,7 +69,7 @@ find_closest_larger() {
   local closest=-1
 
   for num in "$@"; do
-    if [ $num -gt $number ] && { [ $closest -eq -1 ] || [ $num -lt $closest ]; }; then
+    if [ $num -ge $number ] && { [ $closest -eq -1 ] || [ $num -le $closest ]; }; then
       closest=$num
     fi
   done

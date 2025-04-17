@@ -126,7 +126,7 @@ vhost_head=($(grep -n "\<VirtualHost" "$VHOST_CONF_NAME" | awk '{ print $1 }' | 
 
 vhost_tail=($(grep -n "</VirtualHost>" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
-vhost_line=$(grep -n "DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$VHOST_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+vhost_line=$(grep -n "^[^#]*DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$VHOST_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
 
 closest_smaller_in_vhost_head=$(find_closest_smaller $vhost_line "${vhost_head[@]}")
 

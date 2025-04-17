@@ -21,7 +21,6 @@ CBAND_CONF_NAME="/usr/local/apache/conf/cband.conf"
 SSL_CONF_NAME="/usr/local/apache/conf/ssl.conf"
 LOG_DIR="/usr/local/apache/logs/vhosts/$USER_ACCOUNT"
 CURRENT_DATE=$(date +"%Y-%m-%d")
-LOG_FILE="/var/log/apache_update.log"  # 추가: 로그 파일
 
 # 디버깅용 출력
 echo "=== ✅ 입력 변수 확인 ==="
@@ -37,15 +36,6 @@ echo "LOG_DIR: $LOG_DIR"
 echo "BIN: $BIN"
 echo "CURRENT_DATE: $CURRENT_DATE"
 echo "===================="
-
-# 로그 기록 함수 (추가)
-log_content() {
-    local file_name=$1
-    local label=$2
-    echo "=== $label ===" >> "$LOG_FILE"
-    cat "$file_name" >> "$LOG_FILE"
-    echo "" >> "$LOG_FILE"
-}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
@@ -93,6 +83,15 @@ find_closest_larger() {
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # MySQL 접속 확인
+# echo "MySQL 접속 확인 중..."
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
+# if [ $? -ne 0 ]; then
+#   echo "❌ MySQL 로그인에 실패했습니다. root 계정 정보가 올바르지 않습니다."
+#   exit 1
+# else
+#   echo "✅ MySQL 로그인에 성공했습니다."
+# fi
+# if [[ -z $DB_NAME || -z $DB_USER || -z $DB_ROOT_USER || -z $DB_ROOT_PASSWORD ]]; then
 if [[ -n $DB_NAME && -n $DB_USER && -n $DB_ROOT_USER && -n $DB_ROOT_PASSWORD ]]; then
   echo "MySQL 접속 확인 중..."
   mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" -e "exit"
@@ -122,138 +121,160 @@ if [[ -n $DB_NAME && -n $DB_USER && -n $DB_ROOT_USER && -n $DB_ROOT_PASSWORD ]];
     exit 1
   fi
 fi
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     DB 삭제처리                           #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+# 임시파일 생성
+# db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
+
+# # vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
+# echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
+# vhost_lines=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g')
+# # vhost_line=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g' | cut -d':' -f2)
+# if [ -n "$vhost_lines" ]; then
+#     # sed -i.bak "${vhost_line},/<\/VirtualHost>/ s/^/#/" "$VHOST_CONF_NAME"
+#     # echo "✅ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
+#     for vhost_line in $vhost_lines; do
+#         # 파일 경로 추출
+#         path=$(echo "$vhost_line" | awk -F':' '{print $1}')
+#         # 라인 번호 추출
+#         line=$(echo "$vhost_line" | awk -F':' '{print $2}')
+#         echo "✅ 파일 경로: $vhost_line"
+#         if [ -f "$path" ]; then
+#             # 해당 라인부터 VirtualHost 종료까지 주석 처리
+#             sed -i.bak "${line},/<\/VirtualHost>/ s/^/#/" "$path"
+#             echo "✅ $path 파일에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
+#         else
+#             echo "❗️ 파일을 찾을 수 없습니다: $path"
+#             exit 1
+#         fi
+#     done
+# else
+#     echo "❗️ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
+#     exit 1
+# fi
+
+# # cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
+# echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
+# if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME"; then
+#     sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_NAME"
+#     echo "✅ CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
+# else
+#     echo "❗️ CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."
+#     exit 1
+# fi
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
 #                     vhost 주석 처리                       #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-vhost_head=($(grep -n "^[[:space:]]*<VirtualHost" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
-vhost_tail=($(grep -n "^[[:space:]]*</VirtualHost>" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
-vhost_lines=($(grep -n "[[:space:]]*DocumentRoot[[:space:]]*$HOME_DIR/$USER_ACCOUNT/www" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+vhost_head=($(grep -n "\<VirtualHost" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
-# 디버깅: grep 결과 확인
-echo "DEBUG: vhost_lines = ${vhost_lines[@]}" >> "$LOG_FILE"
-echo "DEBUG: vhost_head = ${vhost_head[@]}" >> "$LOG_FILE"
-echo "DEBUG: vhost_tail = ${vhost_tail[@]}" >> "$LOG_FILE"
+vhost_tail=($(grep -n "</VirtualHost>" "$VHOST_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
-if [ ${#vhost_lines[@]} -eq 0 ]; then
-    echo "❗️ vhost 설정에서 $USER_ACCOUNT DocumentRoot를 찾을 수 없습니다."
+vhost_line=$(grep -n "DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$VHOST_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+
+closest_smaller_in_vhost_head=$(find_closest_smaller $vhost_line "${vhost_head[@]}")
+
+closest_larger_in_vhost_tail=$(find_closest_larger $vhost_line "${vhost_tail[@]}")
+
+if [ $closest_smaller_in_vhost_head -eq -1 ]; then
+  echo "❌ vhost 주석 처리: vhost_head에서 입력값보다 작은 수가 없습니다."
+  exit 1
+fi
+
+if [ $closest_larger_in_vhost_tail -eq -1 ]; then
+  echo "❌ vhost 주석 처리: vhost_tail에서 입력값보다 큰 수가 없습니다."
+  exit 1
+fi
+
+echo "✅ vhost 주석 처리: ${closest_smaller_in_vhost_head} < ${vhost_line} < ${closest_larger_in_vhost_tail}"
+# 디버깅용 출력
+# sed -n "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}p" $VHOST_CONF_NAME
+sed -i.$CURRENT_DATE "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}s/^/# /" "$VHOST_CONF_NAME"
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                           #
+#                     vhost 주석 처리                         #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                           #
+#                     Cband 주석 처리                         #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+cband_head=($(grep -n "\<CBandUser" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+cband_tail=($(grep -n "</CBandUser>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+cband_line=$(grep -n "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+
+closest_smaller_in_cband_head=$(find_closest_smaller $cband_line "${cband_head[@]}")
+
+closest_larger_in_cband_tail=$(find_closest_larger $cband_line "${cband_tail[@]}")
+
+if [ $closest_smaller_in_cband_head -eq -1 ]; then
+  echo "❌ Cband 주석 처리: cband_head에서 입력값보다 작은 수가 없습니다."
+  exit 1
+fi
+
+if [ $closest_larger_in_cband_tail -eq -1 ]; then
+  echo "❌ Cband 주석 처리: cband_tail에서 입력값보다 큰 수가 없습니다."
+  exit 1
+fi
+echo "✅ Cband 주석 처리: ${closest_smaller_in_cband_head} < ${cband_line} < ${closest_larger_in_cband_tail}"
+# 디버깅용 출력
+# sed -n "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}p" $CBAND_CONF_NAME
+sed -i.$CURRENT_DATE "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}s/^/# /" "$CBAND_CONF_NAME"
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                           #
+#                     cband 주석 처리                         #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                           #
+#                     ssl 주석 처리                           #
+#                                                           #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+ssl_head=($(grep -n "\<VirtualHost" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+ssl_tail=($(grep -n "</VirtualHost>" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
+
+# DocumentRoot 라인을 찾는 부분, 만약 존재하지 않으면 아래 로직을 건너뜀
+ssl_line=$(grep -n "DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$SSL_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+
+# ssl_line이 비어있거나 존재하지 않으면 해당 로직을 건너뜀
+if [ -z "$ssl_line" ]; then
+  echo "🔔 ssl 주석 처리: DocumentRoot가 $SSL_CONF_NAME 에 존재하지 않습니다. 주석 처리를 건너뜁니다."
 else
-    # 변경 전 로그
-    log_content "$VHOST_CONF_NAME" "변경 전 vhost.conf"
-    # 백업
-    cp -p "$VHOST_CONF_NAME" "${VHOST_CONF_NAME}.$CURRENT_DATE.bak"
-    for vhost_line in "${vhost_lines[@]}"; do
-        closest_smaller_in_vhost_head=$(find_closest_smaller $vhost_line "${vhost_head[@]}")
-        closest_larger_in_vhost_tail=$(find_closest_larger $vhost_line "${vhost_tail[@]}")
-        echo "DEBUG: Line $vhost_line, Head: $closest_smaller_in_vhost_head, Tail: $closest_larger_in_vhost_tail" >> "$LOG_FILE"
-        if [ $closest_smaller_in_vhost_head -eq -1 ] || [ $closest_larger_in_vhost_tail -eq -1 ]; then
-            echo "❌ vhost 주석 처리: 유효한 VirtualHost 블록을 찾을 수 없습니다."
-            continue
-        fi
-        echo "✅ vhost 주석 처리: ${closest_smaller_in_vhost_head} < ${vhost_line} < ${closest_larger_in_vhost_tail}"
-        temp_conf=$(mktemp /tmp/vhost.conf_tempfile.XXXXXX)
-        sed "${closest_smaller_in_vhost_head},${closest_larger_in_vhost_tail}/{ /^[^#]/ s/^/# / }" "$VHOST_CONF_NAME" > "$temp_conf"
-        mv "$temp_conf" "$VHOST_CONF_NAME"
-    done
-    # 변경 후 로그
-    log_content "$VHOST_CONF_NAME" "변경 후 vhost.conf"
+  closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${ssl_head[@]}")
+  closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${ssl_tail[@]}")
+
+  # 결과 출력
+  if [ $closest_smaller_in_ssl_head -eq -1 ]; then
+    echo "❌ ssl 주석 처리: ssl_head에서 입력값보다 작은 수가 없습니다."
+    exit 1
+  fi
+
+  if [ $closest_larger_in_ssl_tail -eq -1 ]; then
+    echo "❌ ssl 주석 처리: ssl_tail에서 입력값보다 큰 수가 없습니다."
+    exit 1
+  fi
+
+  echo "✅ ssl 주석 처리: ${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
+  # 디버깅용 출력
+  # sed -n "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}p" $SSL_CONF_NAME
+  sed -i.$CURRENT_DATE "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}s/^/# /" "$SSL_CONF_NAME"
 fi
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                           #
-#                     vhost 주석 처리                       #
-#                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                           #
-#                     Cband 주석 처리                       #
-#                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-cband_head=($(grep -n "^[[:space:]]*<CBandUser" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
-cband_tail=($(grep -n "^[[:space:]]*</CBandUser>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
-cband_lines=($(grep -n "[[:space:]]*<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
-
-# 디버깅: grep 결과 확인
-echo "DEBUG: cband_lines = ${cband_lines[@]}" >> "$LOG_FILE"
-echo "DEBUG: cband_head = ${cband_head[@]}" >> "$LOG_FILE"
-echo "DEBUG: cband_tail = ${cband_tail[@]}" >> "$LOG_FILE"
-
-if [ ${#cband_lines[@]} -eq 0 ]; then
-    echo "❗️ CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."
-else
-    # 변경 전 로그
-    log_content "$CBAND_CONF_NAME" "변경 전 cband.conf"
-    # 백업
-    cp -p "$CBAND_CONF_NAME" "${CBAND_CONF_NAME}.$CURRENT_DATE.bak"
-    for cband_line in "${cband_lines[@]}"; do
-        closest_smaller_in_cband_head=$(find_closest_smaller $cband_line "${cband_head[@]}")
-        closest_larger_in_cband_tail=$(find_closest_larger $cband_line "${cband_tail[@]}")
-        echo "DEBUG: Line $cband_line, Head: $closest_smaller_in_cband_head, Tail: $closest_larger_in_cband_tail" >> "$LOG_FILE"
-        if [ $closest_smaller_in_cband_head -eq -1 ] || [ $closest_larger_in_cband_tail -eq -1 ]; then
-            echo "❌ Cband 주석 처리: 유효한 CBandUser 블록을 찾을 수 없습니다."
-            continue
-        fi
-        echo "✅ Cband 주석 처리: ${closest_smaller_in_cband_head} < ${cband_line} < ${closest_larger_in_cband_tail}"
-        temp_conf=$(mktemp /tmp/cband.conf_tempfile.XXXXXX)
-        sed "${closest_smaller_in_cband_head},${closest_larger_in_cband_tail}/{ /^[^#]/ s/^/# / }" "$CBAND_CONF_NAME" > "$temp_conf"
-        mv "$temp_conf" "$CBAND_CONF_NAME"
-    done
-    # 변경 후 로그
-    log_content "$CBAND_CONF_NAME" "변경 후 cband.conf"
-fi
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                           #
-#                     Cband 주석 처리                       #
-#                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                           #
-#                     ssl 주석 처리                         #
-#                                                           #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-ssl_head=($(grep -n "^[[:space:]]*<VirtualHost" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
-ssl_tail=($(grep -n "^[[:space:]]*</VirtualHost>" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
-ssl_lines=($(grep -n "[[:space:]]*DocumentRoot[[:space:]]*$HOME_DIR/$USER_ACCOUNT/www" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
-
-# 디버깅: grep 결과 확인
-echo "DEBUG: ssl_lines = ${ssl_lines[@]}" >> "$LOG_FILE"
-echo "DEBUG: ssl_head = ${ssl_head[@]}" >> "$LOG_FILE"
-echo "DEBUG: ssl_tail = ${ssl_tail[@]}" >> "$LOG_FILE"
-
-if [ ${#ssl_lines[@]} -eq 0 ]; then
-    echo "🔔 ssl 주석 처리: DocumentRoot가 $SSL_CONF_NAME 에 존재하지 않습니다. 주석 처리를 건너뜁니다."
-else
-    # 변경 전 로그
-    log_content "$SSL_CONF_NAME" "변경 전 ssl.conf"
-    # 백업
-    cp -p "$SSL_CONF_NAME" "${SSL_CONF_NAME}.$CURRENT_DATE.bak"
-    for ssl_line in "${ssl_lines[@]}"; do
-        closest_smaller_in_ssl_head=$(find_closest_smaller $ssl_line "${ssl_head[@]}")
-        closest_larger_in_ssl_tail=$(find_closest_larger $ssl_line "${ssl_tail[@]}")
-        echo "DEBUG: Line $ssl_line, Head: $closest_smaller_in_ssl_head, Tail: $closest_larger_in_ssl_tail" >> "$LOG_FILE"
-        if [ $closest_smaller_in_ssl_head -eq -1 ] || [ $closest_larger_in_ssl_tail -eq -1 ]; then
-            echo "❌ ssl 주석 처리: 유효한 VirtualHost 블록을 찾을 수 없습니다."
-            continue
-        fi
-        echo "✅ ssl 주석 처리: ${closest_smaller_in_ssl_head} < ${ssl_line} < ${closest_larger_in_ssl_tail}"
-        temp_conf=$(mktemp /tmp/ssl.conf_tempfile.XXXXXX)
-        sed "${closest_smaller_in_ssl_head},${closest_larger_in_ssl_tail}/{ /^[^#]/ s/^/# / }" "$SSL_CONF_NAME" > "$temp_conf"
-        mv "$temp_conf" "$SSL_CONF_NAME"
-    done
-    # 변경 후 로그
-    log_content "$SSL_CONF_NAME" "변경 후 ssl.conf"
-fi
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                           #
-#                     ssl 주석 처리                         #
+#                     ssl 주석 처리                           #
 #                                                           #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -269,8 +290,26 @@ else
   exit 1
 fi
 
+# echo "✅ 데이터베이스 및 DB 사용자 삭제 중..."
+# {
+#   echo "DROP DATABASE \`$DB_NAME\`;"
+#   echo "DELETE FROM mysql.user WHERE User='$DB_USER';"
+#   echo "DELETE FROM mysql.db WHERE User='$DB_USER';"
+#   echo "FLUSH PRIVILEGES;"
+# } >>"$db_temp"
+#
+# # MySQL 쿼리 실행
+# mysql -u "$DB_ROOT_USER" -p"$DB_ROOT_PASSWORD" <"$db_temp"
+# if [ $? -eq 0 ]; then
+#   echo "✅ $DB_NAME 데이터베이스 및 $DB_USER 사용자 삭제에 성공했습니다."
+# else
+#   echo "❌ 데이터베이스 및 사용자 삭제에 실패했습니다."
+#   exit 1
+# fi
+
 # Apache 설정 테스트 및 적용
 echo "✅ Apache 설정 파일 테스트 중..."
+# $BIN -t
 if $BIN -t; then
   echo "✅ Apache 설정 파일에 문제가 없습니다. Apache를 재시작합니다."
   $BIN graceful # Apache 재시작

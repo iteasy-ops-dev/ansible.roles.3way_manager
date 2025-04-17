@@ -212,7 +212,7 @@ cband_head=($(grep -n "\<CBandUser" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cu
 
 cband_tail=($(grep -n "</CBandUser>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
-cband_line=$(grep -n "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+cband_line=$(grep -n "^[^#]*<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
 
 closest_smaller_in_cband_head=$(find_closest_smaller $cband_line "${cband_head[@]}")
 
@@ -247,7 +247,7 @@ ssl_head=($(grep -n "\<VirtualHost" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut 
 ssl_tail=($(grep -n "</VirtualHost>" "$SSL_CONF_NAME" | awk '{ print $1 }' | cut -d':' -f1))
 
 # DocumentRoot 라인을 찾는 부분, 만약 존재하지 않으면 아래 로직을 건너뜀
-ssl_line=$(grep -n "DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$SSL_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
+ssl_line=$(grep -n "^[^#]*DocumentRoot $HOME_DIR/$USER_ACCOUNT/www" "$SSL_CONF_NAME" | awk '{ print $1 }' | head -n 1 | cut -d':' -f1)
 
 # ssl_line이 비어있거나 존재하지 않으면 해당 로직을 건너뜀
 if [ -z "$ssl_line" ]; then

@@ -48,19 +48,15 @@ fi
 # 임시파일 생성
 db_temp=$(mktemp /tmp/db.remove.conf_tempfile.XXXXXX)
 
-# vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리)
+# vhost 삭제 (가상 호스트 설정 파일에서 해당 계정 주석 처리) (수정)
 echo "vhost 설정에서 $USER_ACCOUNT 가상 호스트 주석 처리 중..."
 vhost_lines=$($BIN -S | grep "$USER_ACCOUNT" | grep namevhost | awk '{ print $5 }' | sed 's/[()]//g')
 if [ -n "$vhost_lines" ]; then
     for vhost_line in $vhost_lines; do
-        # 파일 경로 추출
         path=$(echo "$vhost_line" | awk -F':' '{print $1}')
-        # 라인 번호 추출
         line=$(echo "$vhost_line" | awk -F':' '{print $2}')
-        
         if [ -f "$path" ]; then
-            # 해당 라인부터 VirtualHost 종료까지 주석 처리
-            sed -i.bak "${line},/<\/VirtualHost>/ s/^/#/" "$path"
+            sed -i.bak "${line},/<\/VirtualHost>/{ /^[^#]/ s/^/# / }" "$path"
             echo "✅ $path 파일에서 $USER_ACCOUNT 가상 호스트를 주석 처리했습니다."
         else
             echo "❗️ 파일을 찾을 수 없습니다: $path"
@@ -70,14 +66,17 @@ else
     echo "❗️ vhost 설정에서 $USER_ACCOUNT 가상 호스트를 찾을 수 없습니다."
 fi
 
-# cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리)
+
+# cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리) (수정)
 echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
+
 if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME"; then
-    sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/ s/^/#/" "$CBAND_CONF_NAME"
+    sed -i.bak "/<CBandUser cband$USER_ACCOUNT>/,/<\/CBandUser>/{ /^[^#]/ s/^/# / }" "$CBAND_CONF_NAME"
     echo "✅ CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
 else
     echo "❗️ CBand 설정에서 $USER_ACCOUNT 사용자를 찾을 수 없습니다."
 fi
+
 
 # 사용자 삭제 및 디렉토리 정리
 echo "$USER_ACCOUNT 사용자 및 관련 디렉토리 삭제 중..."

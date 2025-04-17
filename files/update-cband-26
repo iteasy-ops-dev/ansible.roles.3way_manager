@@ -33,13 +33,16 @@ if [ -z "$USER_ACCOUNT" ] || [ -z "$CBAND_LIMIT" ]; then
     exit 1
 fi
 
-# cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리) (수정)
+
+# cband 삭제 (cband.conf에서 해당 계정 관련 설정 주석 처리) (수정 2)
 echo "CBand 설정에서 $USER_ACCOUNT 사용자 설정 주석 처리 중..."
 if grep -q "<CBandUser cband$USER_ACCOUNT>" "$CBAND_CONF_NAME"; then
+    # 백업
+    cp -p "$CBAND_CONF_NAME" "${CBAND_CONF_NAME}.$(date +"%Y%m%d%H%M%S").bak"
     # 임시 파일 생성
     temp_conf=$(mktemp /tmp/cband.conf_tempfile.XXXXXX)
     # 모든 cband$USER_ACCOUNT 블록을 주석 처리 (이미 주석 처리된 줄 제외)
-    awk '/^[^#]*<CBandUser cband'"$USER_ACCOUNT"'>/{print "#" $0; flag=1; next} /^[^#]*<\/CBandUser>/{if(flag==1){print "#" $0; flag=0; next}} flag{print "#" $0; next} {print}' "$CBAND_CONF_NAME" > "$temp_conf"
+    awk '/<CBandUser cband'"$USER_ACCOUNT"'>/{flag=1; next} /<\/CBandUser>/{if(flag==1){flag=0; next}} flag{next} {if($0 !~ /^#/) print "#" $0; else print $0}' "$CBAND_CONF_NAME" > "$temp_conf"
     mv "$temp_conf" "$CBAND_CONF_NAME"
     echo "✅ CBand 설정에서 $USER_ACCOUNT 사용자 설정을 주석 처리했습니다."
 else
